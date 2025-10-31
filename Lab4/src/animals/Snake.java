@@ -8,4 +8,8 @@ public class Snake extends Animal {
     public String getDescription() {
         return "Wąż " + this.name + " ma " + this.legs + " nóg.";
     }
+
+    public void makeSound() {
+        System.out.println("ssssss");
+    }
 }

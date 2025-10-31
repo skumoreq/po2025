@@ -13,34 +13,16 @@ public abstract class Animal {
 
     public static Animal getRandomAnimal() {
         Random rand = new Random();
-        String[] syllables = {
-                "ba", "ko", "mi", "la", "da",
-                "ru", "ti", "no", "sa", "pe",
-                "fi", "mu", "ka", "lo", "vi",
-                "ne", "gi", "ra", "so", "tu",
-                "pa", "li", "bo", "zu", "me",
-                "ki", "sa", "na", "do", "fu",
-                "te", "ra", "mi", "jo", "vi",
-                "ku", "la", "si", "po", "de",
-                "ma", "no", "li", "ru", "fa",
-                "bi", "so", "ka", "te", "nu"
-        };
-
-        int num_syllables = rand.nextInt(3) + 2;
-        StringBuilder name = new StringBuilder();
-
-        for (int i = 0; i < num_syllables; i++) {
-            name.append(syllables[rand.nextInt(syllables.length)]);
-        }
+        String name = NameGenerator.generate();
 
         return switch (rand.nextInt(3)) {
-            case 0 -> new Dog(name.toString());
-            case 1 -> new Parrot(name.toString());
-            case 2 -> new Snake(name.toString());
+            case 0 -> new Dog(name);
+            case 1 -> new Parrot(name);
+            case 2 -> new Snake(name);
             default -> null;
         };
-
     }
 
     public abstract String getDescription();
+    public abstract void makeSound();
 }
