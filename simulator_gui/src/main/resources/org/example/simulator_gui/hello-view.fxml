@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.control.TitledPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ToolBar?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<BorderPane>
+    <top>
+        <ToolBar>
+            <Region HBox.hgrow="ALWAYS"/>
+            <HBox alignment="CENTER" spacing="10">
+                <Label text="Wybierz samochód"/>
+                <ComboBox/>
+                <Button text="Dodaj nowy"/>
+                <Button text="Usuń"/>
+            </HBox>
+            <Region HBox.hgrow="ALWAYS"/>
+        </ToolBar>
+    </top>
+
+    <left>
+        <VBox>
+            <TitledPane text="Samochód">
+                <VBox spacing="5">
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <Label text="Model"/>
+                        <TextField/>
+                    </HBox>
+
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <Label text="Nr rejestracyjny"/>
+                        <TextField/>
+                    </HBox>
+
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <Label text="Waga"/>
+                        <TextField/>
+                    </HBox>
+
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <Label text="Prędkość"/>
+                        <TextField/>
+                    </HBox>
+
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <Button text="Włącz"/>
+                        <Button text="Wyłącz"/>
+                    </HBox>
+                </VBox>
+            </TitledPane>
+
+            <TitledPane text="Skrzynia biegów">
+                <VBox spacing="5">
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <Label text="Nazwa"/>
+                        <TextField/>
+                    </HBox>
+
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <Label text="Cena"/>
+                        <TextField/>
+                    </HBox>
+
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <Label text="Waga"/>
+                        <TextField/>
+                    </HBox>
+
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <Label text="Bieg"/>
+                        <TextField/>
+                    </HBox>
+
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <Button text="Zwiększ bieg"/>
+                        <Button text="Zmniejsz bieg"/>
+                    </HBox>
+                </VBox>
+            </TitledPane>
+
+            <TitledPane text="Silnik">
+                <VBox spacing="5">
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <Label text="Nazwa"/>
+                        <TextField/>
+                    </HBox>
+
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <Label text="Cena"/>
+                        <TextField/>
+                    </HBox>
+
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <Label text="Waga"/>
+                        <TextField/>
+                    </HBox>
+
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <Label text="Obroty"/>
+                        <TextField/>
+                    </HBox>
+
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <Button text="Dodaj gazu"/>
+                        <Button text="Ujmij gazu"/>
+                    </HBox>
+                </VBox>
+            </TitledPane>
+
+            <TitledPane text="Sprzęgło">
+                <VBox spacing="5">
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <Label text="Nazwa"/>
+                        <TextField/>
+                    </HBox>
+
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <Label text="Cena"/>
+                        <TextField/>
+                    </HBox>
+
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <Label text="Waga"/>
+                        <TextField/>
+                    </HBox>
+
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <Label text="Stan"/>
+                        <TextField/>
+                    </HBox>
+
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <Button text="Naciśnij"/>
+                        <Button text="Zwolnij"/>
+                    </HBox>
+                </VBox>
+            </TitledPane>
+        </VBox>
+    </left>
+
+    <center>
+        <StackPane style="-fx-background-color: lightgray;">
+
+        </StackPane>
+    </center>
+</BorderPane>
