@@ -26,14 +26,15 @@ public class Car {
 
     public void driveTo(Position destination) {}
 
+    public String getLicensePlateNumber() {
+        return licensePlateNumber;
+    }
     public double getWeight() {
         return 0;
     }
-
     public double getCurrentSpeed() {
         return 0;
     }
-
     public Position getCurrentPosition() {
         return currentPosition;
     }

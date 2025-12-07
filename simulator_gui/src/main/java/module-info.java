@@ -1,8 +1,8 @@
-module org.example.simulator_gui {
+module simulator_gui {
     requires javafx.controls;
     requires javafx.fxml;
+    requires simulator;
 
-
-    opens org.example.simulator_gui to javafx.fxml;
-    exports org.example.simulator_gui;
+    opens simulator_gui to javafx.fxml;
+    exports simulator_gui;
 }

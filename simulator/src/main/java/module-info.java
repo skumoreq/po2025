@@ -1,0 +1,3 @@
+module simulator {
+    exports simulator;
+}

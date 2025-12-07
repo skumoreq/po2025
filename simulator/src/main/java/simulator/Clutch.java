@@ -1,11 +1,11 @@
 package simulator;
 
 public class Clutch extends Component{
-    private boolean isEngaded;
+    private boolean isEngaged;
 
     public Clutch(String name, double weight, double price) {
         super(name, weight, price);
-        isEngaded = false;
+        isEngaged = false;
     }
 
     public void engage() {}
