@@ -1,40 +1,51 @@
 package simulator;
 
-import static java.lang.Math.*;
+import static java.lang.Math.sqrt;
+import static java.lang.Math.min;
 
 public class Position {
     private double x;
     private double y;
 
+    // Constructors
+    public Position() {
+        this(0, 0);
+    }
     public Position(double x, double y) {
         this.x = x;
         this.y = y;
     }
 
-    public double getX() {
-        return x;
-    }
+    // Basic getters
+    public double getX() { return this.x; }
+    public double getY() { return this.y; }
 
-    public double getY() {
-        return y;
-    }
-
+    // Method moveTo calculates new coordinates of the position by calculating the displacment vector pointing towards
+    // the destination; The magnitude of the vector is speed * deltaTime; Speed and deltaTime need to be a non-negative
+    // values
     public void moveTo(Position destination, double speed, double deltaTime) {
-        double displacement = speed * deltaTime;
+        if (speed < 0.0) {
+            throw new IllegalArgumentException("speed must be non-negative, got: " + speed);
+        }
+        if (deltaTime < 0.0) {
+            throw new IllegalArgumentException("deltaTime must be non-negative, got: " + speed);
+        }
 
-        double deltaX = destination.x - this.x;
-        double deltaY = destination.y - this.y;
-        double deltaXY = sqrt(deltaX*deltaX + deltaY*deltaY);
+        if (speed == 0.0 || deltaTime == 0.0) { return; } // magnitude is 0 so no displacement
 
-        displacement = min(displacement, deltaXY);
+        // Calculate distance to destination
+        double dx = destination.x - this.x;
+        double dy = destination.y - this.y;
+        double distance = sqrt(dx * dx + dy * dy);
 
-        if (displacement == 0) return;
+        if (distance == 0.0) { return; } // already at the destination
 
-        double invDeltaXY = 1 / deltaXY;
-        double stepX = displacement * deltaX * invDeltaXY;
-        double stepY = displacement * deltaY * invDeltaXY;
+        // If distance is shorter than displacement's magnitude stop at the destination
+        double magnitude = min(speed * deltaTime, distance);
 
-        this.x += stepX;
-        this.y += stepY;
+        // (dx, dy) / distance gives us a unit vector which multiplied by the magnitude gets us the displacement vector
+        double inverseDistance = 1.0 / distance;
+        this.x += magnitude * dx * inverseDistance;
+        this.y += magnitude * dy * inverseDistance;
     }
 }

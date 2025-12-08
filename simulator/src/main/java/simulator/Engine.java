@@ -1,20 +1,23 @@
 package simulator;
 
 public class Engine extends Component{
-    private int maxRPM;
+    private final int maxRPM;
     private int currentRPM;
 
-    public Engine(String name, double weight, double price, int maxRPM) {
+    // Constructor
+    public Engine(String name, double weight, double price) {
         super(name, weight, price);
-        this.maxRPM = maxRPM;
-        currentRPM = 0;
+        this.maxRPM = 7000;
+        this.currentRPM = 0;
     }
 
+    // Basic getters
+    public int getMaxRPM() { return this.maxRPM; }
+    public int getCurrentRPM() { return this.currentRPM; }
+
+    // Engine control methods - not yet implemented
     public void start() {}
-
     public void stop() {}
-
     public void increaseRPM() {}
-
     public void decreaseRPM() {}
 }

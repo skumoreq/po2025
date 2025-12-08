@@ -43,7 +43,7 @@ public class Controller {
     @FXML private void onCarChoiceComboBox() {
         Car car = tournament.getCarByLicensePlateNumber(carChoiceComboBox.getValue());
 
-        carLicensePlateNumberTextField.setText(car.getLicensePlateNumber());
+        carLicensePlateNumberTextField.setText(car.getPlateNumber());
     }
     @FXML private void onAddCarButton() {
         Clutch newClutch = new Clutch(
@@ -55,20 +55,16 @@ public class Controller {
                 gearboxNameTextField.getText(),
                 Double.parseDouble(gearboxWeightTextField.getText()),
                 Double.parseDouble(gearboxPriceTextField.getText()),
-                5,
                 newClutch
         );
         Engine newEngine = new Engine(
                 engineNameTextField.getText(),
                 Double.parseDouble(engineWeightTextField.getText()),
-                Double.parseDouble(enginePriceTextField.getText()),
-                8000
+                Double.parseDouble(enginePriceTextField.getText())
         );
         Car newCar = new Car(
-                carLicensePlateNumberTextField.getText(),
-                carNameTextField.getText(),
-                100, new Position(0, 0),
-                newGearbox, newEngine
+                new Position(0, 0), newGearbox, newEngine, carLicensePlateNumberTextField.getText(),
+                carNameTextField.getText()
         );
 
         tournament.addCarToTournament(newCar);

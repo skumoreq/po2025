@@ -4,33 +4,45 @@ import java.util.ArrayList;
 import java.util.Date;
 
 public class Tournament {
-    private String name;
-    private Date date;
-    private ArrayList<Car> competitors;
+    private final String title;
+    private final Date date;
+    private final ArrayList<Car> competitors;
 
-    public Tournament(String name, Date date) {
-        this.name = name;
+    // Constructors
+    public Tournament() {
+        this("Turniej", new Date());
+    }
+    public Tournament(String title, Date date) {
+        this.title = title;
         this.date = date;
-        competitors = new ArrayList<Car>();
+        competitors = new ArrayList<>();
     }
 
-    public ArrayList<Car> getCompetitors() {
-        return competitors;
-    }
-    public void addCarToTournament(Car car) {
-        competitors.add(car);
-    }
-    public void removeCarFromTournamentByLicensePlateNumber(String licensePlateNumber) {
-        competitors.remove(getCarByLicensePlateNumber(licensePlateNumber));
-    }
-    public Car getCarByLicensePlateNumber(String licensePlateNumber) {
-        for (Car car : competitors) {
-            if (car.getLicensePlateNumber().equals(licensePlateNumber)) {
-                return car;
-            }
+    // Basic getters
+    public String getTitle() { return this.title; }
+    public Date getDate() { return this.date; }
+    public ArrayList<Car> getCompetitors() { return this.competitors; }
+
+    // Competitors ArrayList methods
+    public Car findCompetitor(String plateNumber) {
+        for (Car competitor: this.competitors) {
+            if (competitor.getPlateNumber().equals(plateNumber)) { return competitor; }
         }
         return null;
     }
+    public void addCompetitor(Car car) {
+        // Check for unique plate number
+        if (this.findCompetitor(car.getPlateNumber()) == null) {
+            this.competitors.add(car);
+        }
+    }
+    public void removeCompetitor(String plateNumber) {
+        Car competitor = this.findCompetitor(plateNumber);
+        if (competitor != null) {
+            this.competitors.remove(competitor);
+        }
+    }
 
+    // Torunament control methods - not yet implemented
     public void begin() {}
 }
