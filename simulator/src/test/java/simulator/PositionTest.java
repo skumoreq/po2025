@@ -1,7 +1,5 @@
 package simulator;
 
-import org.junit.Rule;
-import org.junit.rules.ExpectedException;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 
@@ -41,6 +39,9 @@ public class PositionTest {
         position.moveTo(destination, 1.0, 100.0);
         assertEquals(100.0, position.getX(), 0.0);
         assertEquals(100.0, position.getY(), 0.0);
+
+        // Check if null destination is not allowed
+        assertThrows(IllegalArgumentException.class, () -> position.moveTo(null, 0.0, 0.0));
 
         // Check if negative speed and deltaTime are not allowed
         assertThrows(IllegalArgumentException.class, () -> position.moveTo(destination, -1.0, 0.0));

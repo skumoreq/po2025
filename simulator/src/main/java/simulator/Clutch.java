@@ -8,6 +8,10 @@ public class Clutch extends Component{
         isEngaged = false;
     }
 
-    public void engage() {}
-    public void disengage() {}
+    // Basic getters
+    public boolean getIsEngaged() { return this.isEngaged; }
+
+    // Clutch control methods - not yet implemented
+    public void engage() { throw new UnsupportedOperationException("Not implemented yet"); }
+    public void disengage() { throw new UnsupportedOperationException("Not implemented yet"); }
 }

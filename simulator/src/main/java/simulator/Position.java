@@ -8,9 +8,7 @@ public class Position {
     private double y;
 
     // Constructors
-    public Position() {
-        this(0, 0);
-    }
+    public Position() { this(0, 0); }
     public Position(double x, double y) {
         this.x = x;
         this.y = y;
@@ -24,11 +22,14 @@ public class Position {
     // the destination; The magnitude of the vector is speed * deltaTime; Speed and deltaTime need to be a non-negative
     // values
     public void moveTo(Position destination, double speed, double deltaTime) {
+        if (destination == null) {
+            throw new IllegalArgumentException("'destination' parameter must not be null");
+        }
         if (speed < 0.0) {
-            throw new IllegalArgumentException("speed must be non-negative, got: " + speed);
+            throw new IllegalArgumentException("'speed' parameter must be non-negative, got: " + speed);
         }
         if (deltaTime < 0.0) {
-            throw new IllegalArgumentException("deltaTime must be non-negative, got: " + speed);
+            throw new IllegalArgumentException("'deltaTime' parameter must be non-negative, got: " + speed);
         }
 
         if (speed == 0.0 || deltaTime == 0.0) { return; } // magnitude is 0 so no displacement
