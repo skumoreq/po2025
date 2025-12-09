@@ -91,3 +91,6 @@ Arkadiusz Baran, Maciek Miłek
 Roch Głogowski, Antoni Janek
 
 36) Inteligentna spiżarka: spis jedzenia i produktów w spiżarce, książka kucharska, sprawdzanie dostępnych przepisów na podstawie stanu spiżarki 
+
+37) System do pomiarów natężenia ruchu rowerowego: VideoTagger + sporządzanie statystyk.
+Szymon Kumorek, Jakub Bogunia
