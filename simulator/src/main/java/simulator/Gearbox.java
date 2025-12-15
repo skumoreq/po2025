@@ -1,34 +1,82 @@
 package simulator;
 
-// Speed (km/h) ≈ (RPM × 0.032) / Gear Ratio
-// Gear 1 (4.2:1), Gear 2 (2.5:1), Gear 3 (1.6:1), Gear 4 (1.0:1), Gear 5 (0.8:1)
-
 public class Gearbox extends Component {
-    private static final int NUM_GEARS = 5;
+    // «««Class Constants»»»
+    public static final int NUM_GEARS = 5;
 
+
+
+    // «««Core Identity»»»
     private final Clutch clutch;
-    private int currentGear;
-    private int currentGearRatio;
+    private final double[] gearRatios;
 
-    // Constructor
-    public Gearbox(String name, double weight, double price, Clutch clutch) {
+    // «««Runtime State»»»
+    private int currentGear;
+    private double currentGearRatio;
+
+    // «««Constructors»»»
+    public Gearbox(String name, double weight, double price, Clutch clutch, double[] gearRatios) {
         super(name, weight, price);
 
-        if (clutch == null) {
-            throw new IllegalArgumentException("'clutch' parameter must not be null");
-        }
+        // Clone clutch Object
+        this.clutch = new Clutch(
+                clutch.getName(),
+                clutch.getWeight(),
+                clutch.getPrice()
+        );
 
-        this.clutch = clutch;
+        this.gearRatios = gearRatios;
         this.currentGear = 0;
-        this.currentGearRatio = 0;
+        this.currentGearRatio = 0.0;
     }
 
-    // Basic getters
-    public Clutch getClutch() { return this.clutch; }
-    public int getCurrentGear() { return this.currentGear; }
-    public int getCurrentGearRatio() { return this.currentGearRatio; }
 
-    // Gearbox control methods - not yet implemented
-    public void shiftUp() { throw new UnsupportedOperationException("Not implemented yet"); }
-    public void shiftDown() { throw new UnsupportedOperationException("Not implemented yet"); }
+
+    // «««Basic Getters»»»
+    public Clutch getClutch() {
+        return this.clutch;
+    }
+    public double[] getGearRatios() {
+        return this.gearRatios;
+    }
+    public int getCurrentGear() {
+        return this.currentGear;
+    }
+    public double getCurrentGearRatio() {
+        return this.currentGearRatio;
+    }
+
+    // «««String Representations»»»
+    public String gearRatiosToString() {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < this.gearRatios.length; i++) {
+            sb.append(String.format("%.1f", this.gearRatios[i]));
+            if (i < this.gearRatios.length - 1) {
+                sb.append("│");
+            }
+        }
+        return sb.toString();
+    }
+    public String currentGearToString() {
+        return switch (this.currentGear) {
+            case 0 -> "N";
+            case 1 -> "1↓";
+            case 5 -> "5↑";
+            default -> String.format("%d", this.currentGear);
+        };
+    }
+    public String currentGearRatioToString() {
+        return String.format("%.1f", this.currentGearRatio);
+    }
+
+
+
+    // «««Action Methods»»»
+    // !!! Not implemented yet !!!
+    public void shiftUp() {
+
+    }
+    public void shiftDown() {
+
+    }
 }

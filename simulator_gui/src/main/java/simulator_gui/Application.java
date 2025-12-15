@@ -3,18 +3,21 @@ package simulator_gui;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 
 import java.io.IOException;
 
 public class Application extends javafx.application.Application {
-    @Override
-    public void start(Stage stage) throws IOException {
-        FXMLLoader fxmlLoader = new FXMLLoader(Application.class.getResource("view.fxml"));
-        Scene scene = new Scene(fxmlLoader.load(), 320, 240);
+    @Override public void start(Stage primaryStage) throws IOException {
+        FXMLLoader fxmlLoader = new FXMLLoader(Application.class.getResource("PrimaryView.fxml"));
+        Scene scene = new Scene(fxmlLoader.load());
 
-        stage.setTitle("Symulator");
-        stage.setScene(scene);
-        stage.setMaximized(true);
-        stage.show();
+        primaryStage.initStyle(StageStyle.UTILITY);
+        primaryStage.setMaximized(true);
+        primaryStage.setResizable(false);
+        primaryStage.setTitle("Symulator");
+
+        primaryStage.setScene(scene);
+        primaryStage.show();
     }
 }

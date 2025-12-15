@@ -1,17 +1,35 @@
 package simulator;
 
 public class Clutch extends Component{
+    // «««Runtime State»»»
     private boolean isEngaged;
 
+    // «««Constructors»»»
     public Clutch(String name, double weight, double price) {
         super(name, weight, price);
-        isEngaged = false;
+        this.isEngaged = false;
     }
 
-    // Basic getters
-    public boolean getIsEngaged() { return this.isEngaged; }
 
-    // Clutch control methods - not yet implemented
-    public void engage() { throw new UnsupportedOperationException("Not implemented yet"); }
-    public void disengage() { throw new UnsupportedOperationException("Not implemented yet"); }
+
+    // «««Basic Getters»»»
+    public boolean getIsEngaged() {
+        return this.isEngaged;
+    }
+
+    // «««String Representations»»»
+    public String isEngagedToString() {
+        return this.isEngaged ? "zaciśnięte" : "rozłączone";
+    }
+
+
+
+    // «««Action Methods»»»
+    // !!! Not implemented yet !!!
+    public void engage() {
+
+    }
+    public void disengage() {
+
+    }
 }

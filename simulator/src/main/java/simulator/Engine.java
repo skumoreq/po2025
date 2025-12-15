@@ -1,22 +1,45 @@
 package simulator;
 
 public class Engine extends Component{
-    private static final int MAX_RPM = 7000;
+    // «««Core Identity»»»
+    private final double maxRPM;
 
-    private int currentRPM;
+    // «««Runtime State»»»
+    private double currentRPM;
 
-    // Constructor
-    public Engine(String name, double weight, double price) {
+    // «««Constructors»»»
+    public Engine(String name, double weight, double price, double maxRPM) {
         super(name, weight, price);
+        this.maxRPM = maxRPM;
         this.currentRPM = 0;
     }
 
-    // Basic getters
-    public int getCurrentRPM() { return this.currentRPM; }
 
-    // Engine control methods - not yet implemented
-    public void start() { throw new UnsupportedOperationException("Not implemented yet"); }
-    public void stop() { throw new UnsupportedOperationException("Not implemented yet"); }
-    public void increaseRPM() { throw new UnsupportedOperationException("Not implemented yet"); }
-    public void decreaseRPM() { throw new UnsupportedOperationException("Not implemented yet"); }
+
+    // «««Basic Getters»»»
+    public double getMaxRPM() {
+        return this.maxRPM;
+    }
+    public double getCurrentRPM() {
+        return this.currentRPM;
+    }
+
+    // «««String Representations»»»
+    public String maxRPMToString() {
+        return String.format("%.0f RPM", this.maxRPM);
+    }
+    public String currentRPMToString() {
+        return String.format("%.0f RPM%s", this.currentRPM, (this.currentRPM > this.maxRPM * 0.9) ? " ⚠" : "");
+    }
+
+
+
+    // «««Action Methods»»»
+    // !!! Not implemented yet !!!
+    public void increaseRPM() {
+
+    }
+    public void decreaseRPM() {
+
+    }
 }

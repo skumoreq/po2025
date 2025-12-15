@@ -1,57 +1,118 @@
 package simulator;
 
 public class Car {
-    private static final int MAX_SPEED = 200;
+    // «««Class Constants»»»
+    public static final double BASE_CAR_WEIGHT = 1000.0;
+    public static final double SPEED_CONSTANT = 0.03;
 
+    // «««Class Methods»»»
+    public static double getSpeed(double RPM, double gearRatio) {
+        return gearRatio > 0.0 ? (RPM * Car.SPEED_CONSTANT) / gearRatio : 0.0;
+    }
+
+
+
+    // «««Core Identity»»»
     private final Position position;
     private final Gearbox gearbox;
     private final Engine engine;
     private final String plateNumber;
     private final String modelName;
+
+    // «««Runtime State»»»
     private boolean isEngineOn;
 
-    // Constrcutor
+    // «««Constructors»»»
     public Car(Position position, Gearbox gearbox, Engine engine, String plateNumber, String modelName) {
-        if (position == null) {
-            throw new IllegalArgumentException("'position' parameter must not be null");
-        }
-        if (gearbox == null) {
-            throw new IllegalArgumentException("'gearbox' parameter must not be null");
-        }
-        if (engine == null) {
-            throw new IllegalArgumentException("'engine' parameter must not be null");
-        }
-        if (plateNumber == null || plateNumber.isEmpty()) {
-            throw new IllegalArgumentException("'plateNumber' parameter must not be null nor empty");
-        }
-        if (modelName == null || modelName.isEmpty()) {
-            throw new IllegalArgumentException("'modelName' parameter must not be null nor empty");
-        }
-
         this.position = position;
-        this.gearbox = gearbox;
-        this.engine = engine;
+
+        // Clone gearbox Object
+        this.gearbox = new Gearbox(
+                gearbox.getName(),
+                gearbox.getWeight(),
+                gearbox.getPrice(),
+                gearbox.getClutch(),
+                gearbox.getGearRatios()
+        );
+
+        // Clone engine Object
+        this.engine = new Engine(
+                engine.getName(),
+                engine.getWeight(),
+                engine.getPrice(),
+                engine.getMaxRPM()
+        );
+
         this.plateNumber = plateNumber;
         this.modelName = modelName;
         this.isEngineOn = false;
     }
 
-    // Basic getters
-    public Position getPosition() { return this.position; }
-    public Gearbox getGearbox() { return this.gearbox; }
-    public Engine getEngine() { return this.engine; }
-    public String getPlateNumber() { return this.plateNumber; }
-    public String getModelName() { return this.modelName; }
-    public boolean getIsEngineOn() { return this.isEngineOn; }
 
-    // Advanced getters - not yet implemented
-    public double getWeight() {
-        return this.gearbox.getWeight() + this.gearbox.getClutch().getWeight() + this.engine.getWeight();
+
+    // «««Basic Getters»»»
+    public Position getPosition() {
+        return this.position;
     }
-    public double getCurrentSpeed() { return 0; }
+    public Gearbox getGearbox() {
+        return this.gearbox;
+    }
+    public Engine getEngine() {
+        return this.engine;
+    }
+    public String getPlateNumber() {
+        return this.plateNumber;
+    }
+    public String getModelName() {
+        return this.modelName;
+    }
+    public boolean getIsEngineOn() {
+        return this.isEngineOn;
+    }
 
-    // Car control methods - not yet implemented
-    public void switchOn() { throw new UnsupportedOperationException("Not implemented yet"); }
-    public void switchOff() { throw new UnsupportedOperationException("Not implemented yet"); }
-    public void driveTo(Position destination) { throw new UnsupportedOperationException("Not implemented yet"); }
+    // «««Calculations»»»
+    public double getTotalWeight() {
+        return this.gearbox.getClutch().getWeight() + this.gearbox.getWeight()
+                + this.engine.getWeight() + Car.BASE_CAR_WEIGHT;
+    }
+    public double getTotalPrice() {
+        return this.gearbox.getClutch().getPrice() + this.gearbox.getPrice() + this.engine.getPrice();
+    }
+    public double getMaxSpeed() {
+        return Car.getSpeed(this.engine.getMaxRPM(), this.gearbox.getGearRatios()[Gearbox.NUM_GEARS - 1]);
+    }
+    public double getCurrentSpeed() {
+        return Car.getSpeed(this.engine.getCurrentRPM(), this.gearbox.getCurrentGearRatio());
+    }
+
+    // «««String Representations»»»
+    public String isEngineOnToString() {
+        return this.isEngineOn ? "włączony" : "wyłączony";
+    }
+    public String totalWeightToString() {
+        return String.format("%.2f kg", this.getTotalWeight());
+    }
+    public String totalPriceToString() {
+        return String.format("%.2f PLN", this.getTotalPrice());
+    }
+    public String maxSpeedToString() {
+        return String.format("%.0f km/h", this.getMaxSpeed());
+    }
+    public String currentSpeedToString() {
+        return String.format("%.0f km/h", this.getCurrentSpeed());
+    }
+
+
+
+    // «««Action Methods»»»
+    // !!! Not implemented yet !!!
+    public void switchOn() {
+
+    }
+    public void switchOff() {
+
+    }
+    public void driveTo(Position destination) {
+
+    }
 }
