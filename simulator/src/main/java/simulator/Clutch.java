@@ -1,35 +1,33 @@
 package simulator;
 
 public class Clutch extends Component{
-    // «««Runtime State»»»
-    private boolean isEngaged;
+    // «««Dynamic State»»»
+    private boolean isEngaged = true;
 
-    // «««Constructors»»»
+    // «««Initialization»»»
     public Clutch(String name, double weight, double price) {
         super(name, weight, price);
-        this.isEngaged = false;
     }
 
 
 
-    // «««Basic Getters»»»
-    public boolean getIsEngaged() {
+    // «««Accessors»»»
+    public boolean isEngaged() {
         return this.isEngaged;
     }
 
-    // «««String Representations»»»
-    public String isEngagedToString() {
+    // «««Display Methods»»»
+    public String getEngagementStatusText() {
         return this.isEngaged ? "zaciśnięte" : "rozłączone";
     }
 
 
 
-    // «««Action Methods»»»
-    // !!! Not implemented yet !!!
+    // «««Control Methods»»»
     public void engage() {
-
+        this.isEngaged = true;
     }
     public void disengage() {
-
+        this.isEngaged = false;
     }
 }

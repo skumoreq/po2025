@@ -10,11 +10,12 @@ public class Gearbox extends Component {
     private final Clutch clutch;
     private final double[] gearRatios;
 
-    // «««Runtime State»»»
-    private int currentGear;
-    private double currentGearRatio;
+    // «««Dynamic State»»»
+    private int previousGear = 0;
+    private int gear = 0;
+    private double gearRatio = 0.0;
 
-    // «««Constructors»»»
+    // «««Initialization»»»
     public Gearbox(String name, double weight, double price, Clutch clutch, double[] gearRatios) {
         super(name, weight, price);
 
@@ -26,28 +27,32 @@ public class Gearbox extends Component {
         );
 
         this.gearRatios = gearRatios;
-        this.currentGear = 0;
-        this.currentGearRatio = 0.0;
     }
 
 
 
-    // «««Basic Getters»»»
+    // «««Accessors»»»
     public Clutch getClutch() {
         return this.clutch;
     }
     public double[] getGearRatios() {
         return this.gearRatios;
     }
-    public int getCurrentGear() {
-        return this.currentGear;
+    public int getPreviousGear() {
+        return this.previousGear;
     }
-    public double getCurrentGearRatio() {
-        return this.currentGearRatio;
+    public int getGear() {
+        return this.gear;
+    }
+    public double getGearRatio() {
+        return this.gearRatio;
+    }
+    public boolean isInNeutral() {
+        return this.gear == 0 || !this.clutch.isEngaged();
     }
 
-    // «««String Representations»»»
-    public String gearRatiosToString() {
+    // «««Display Methods»»»
+    public String getGearRatiosListText() {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < this.gearRatios.length; i++) {
             sb.append(String.format("%.1f", this.gearRatios[i]));
@@ -57,26 +62,35 @@ public class Gearbox extends Component {
         }
         return sb.toString();
     }
-    public String currentGearToString() {
-        return switch (this.currentGear) {
+    public String getGearText() {
+        return switch (this.gear) {
             case 0 -> "N";
             case 1 -> "1↓";
-            case 5 -> "5↑";
-            default -> String.format("%d", this.currentGear);
+            case NUM_GEARS -> NUM_GEARS + "↑";
+            default -> String.valueOf(this.gear);
         };
     }
-    public String currentGearRatioToString() {
-        return String.format("%.1f", this.currentGearRatio);
+
+
+
+    // «««Control Methods»»»
+    public void clearPreviousGear() {
+        this.previousGear = 0;
     }
-
-
-
-    // «««Action Methods»»»
-    // !!! Not implemented yet !!!
+    public void storePreviousGear() {
+        this.previousGear = this.gear;
+    }
+    public void updateGearRatio() {
+        this.gearRatio = this.isInNeutral() ? 0.0 : this.gearRatios[this.gear - 1];
+    }
     public void shiftUp() {
-
+        if (gear < NUM_GEARS) {
+            gear++;
+        }
     }
     public void shiftDown() {
-
+        if (gear > 0) {
+            gear--;
+        }
     }
 }

@@ -147,8 +147,8 @@ public class FormController {
 
         setTitledPaneExpanded(clutchTitledPane, true);
         Clutch clutch = Simulator.CLUTCHES[clutchComboBox.getSelectionModel().getSelectedIndex()];
-        clutchWeightTextField.setText(clutch.weightToString());
-        clutchPriceTextField.setText(clutch.priceToString());
+        clutchWeightTextField.setText(clutch.getWeightText());
+        clutchPriceTextField.setText(clutch.getPriceText());
     }
     @FXML private void handleGearboxComboBox() {
         setFormToAddMode();
@@ -171,9 +171,9 @@ public class FormController {
 
         setTitledPaneExpanded(gearboxTitledPane, true);
         Gearbox gearbox = Simulator.GEARBOXES[gearboxIndex];
-        gearboxWeightTextField.setText(gearbox.weightToString());
-        gearboxPriceTextField.setText(gearbox.priceToString());
-        gearboxGearRatiosTextField.setText(gearbox.gearRatiosToString());
+        gearboxWeightTextField.setText(gearbox.getWeightText());
+        gearboxPriceTextField.setText(gearbox.getPriceText());
+        gearboxGearRatiosTextField.setText(gearbox.getGearRatiosListText());
     }
     @FXML private void handleEngineComboBox() {
         setFormToAddMode();
@@ -188,9 +188,9 @@ public class FormController {
 
         setTitledPaneExpanded(engineTitledPane, true);
         Engine engine = Simulator.ENGINES[engineComboBox.getSelectionModel().getSelectedIndex()];
-        engineWeightTextField.setText(engine.weightToString());
-        enginePriceTextField.setText(engine.priceToString());
-        engineMaxRPMTextField.setText(engine.maxRPMToString());
+        engineWeightTextField.setText(engine.getWeightText());
+        enginePriceTextField.setText(engine.getPriceText());
+        engineMaxRPMTextField.setText(engine.getMaxRpmText());
     }
 
     // Button handlers
@@ -206,9 +206,9 @@ public class FormController {
                 carPlateNumberTextField.getText().trim(),
                 carModelNameTextField.getText().trim()
         );
-        carWeightTextField.setText(carBeingCreated.totalWeightToString());
-        carPriceTextField.setText(carBeingCreated.totalPriceToString());
-        carMaxSpeedTextField.setText(carBeingCreated.maxSpeedToString());
+        carWeightTextField.setText(carBeingCreated.getTotalWeightText());
+        carPriceTextField.setText(carBeingCreated.getTotalPriceText());
+        carMaxSpeedTextField.setText(carBeingCreated.getTopSpeedText());
     }
     @FXML private void handleConfirmButton() {
         String plateNumber = carBeingCreated.getPlateNumber();

@@ -90,9 +90,11 @@
                 spacing="5"
                 GridPane.rowIndex="3" GridPane.columnIndex="0" GridPane.columnSpan="2">
             <Button fx:id="carTurnOnButton"
+                    onAction="#handleCarTurnOnButton"
                     prefWidth="150"
                     text="▶ Włącz"/>
             <Button fx:id="catTurnOffButton"
+                    onAction="#handleCarTurnOffButton"
                     prefWidth="150"
                     text="▶ Wyłącz"/>
           </HBox>
@@ -141,11 +143,13 @@
                 spacing="5"
                 GridPane.rowIndex="3" GridPane.columnIndex="0" GridPane.columnSpan="2">
             <Button fx:id="clutchEngageButton"
-                    prefWidth="150"
-                    text="▶ Naciśnij"/>
-            <Button fx:id="clutchDisengageButton"
+                    onAction="#handleClutchEngageButton"
                     prefWidth="150"
                     text="▶ Zwolnij"/>
+            <Button fx:id="clutchDisengageButton"
+                    onAction="#handleClutchDisengageButton"
+                    prefWidth="150"
+                    text="▶ Naciśnij"/>
           </HBox>
         </GridPane>
       </TitledPane>
@@ -192,9 +196,11 @@
                 spacing="5"
                 GridPane.rowIndex="3" GridPane.columnIndex="0" GridPane.columnSpan="2">
             <Button fx:id="gearboxShiftUpButton"
+                    onAction="#handleGearboxShiftUpButton"
                     prefWidth="150"
                     text="▶ Zwiększ bieg"/>
             <Button fx:id="gearboxShiftDownButton"
+                    onAction="#handleGearboxShiftDownButton"
                     prefWidth="150"
                     text="▶ Zmniejsz bieg"/>
           </HBox>
@@ -243,9 +249,11 @@
                 spacing="5"
                 GridPane.rowIndex="3" GridPane.columnIndex="0" GridPane.columnSpan="2">
             <Button fx:id="engineIncreaseRPMButton"
+                    onAction="#handleEngineIncreaseRPMButton"
                     prefWidth="150"
                     text="▶ Dodaj gazu"/>
             <Button fx:id="engineDecreaseRPMButton"
+                    onAction="#handleEngineDecreaseRPMButton"
                     prefWidth="150"
                     text="▶ Ujmij gazu"/>
           </HBox>

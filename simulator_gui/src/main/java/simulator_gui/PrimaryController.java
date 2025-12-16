@@ -1,5 +1,6 @@
 package simulator_gui;
 
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -20,7 +21,36 @@ import javafx.collections.ObservableList;
 
 import java.io.IOException;
 
-public class PrimaryController {
+public class PrimaryController implements Listener {
+    // «««Listener Interface Implementation»»»
+    @Override public void update() {
+        Platform.runLater(this::refreshCarDisplay);
+    }
+    private void refreshCarDisplay() {
+        if (simulator.getSelectedCar() != null) {
+            updateCarCurrentSpeedTextField();
+            updateClutchIsEngagedTextField();
+            updateGearboxCurrentGearTextField();
+            updateEngineCurrentRPMTextField();
+        }
+    }
+    private void subscribeToSelectedCar() {
+        unsubscribeFromSelectedCar();
+
+        Car selectedCar = simulator.getSelectedCar();
+        if (selectedCar != null) {
+            selectedCar.addListener(this);
+        }
+    }
+    private void unsubscribeFromSelectedCar() {
+        Car selectedCar = simulator.getSelectedCar();
+        if (selectedCar != null) {
+            selectedCar.removeListener(this);
+        }
+    }
+
+
+
     // «««JavaFX Scene Controls»»»
 
     // TitledPane
@@ -83,37 +113,37 @@ public class PrimaryController {
     }
 
     private void updateCarCurrentSpeedTextField() {
-        carCurrentSpeedTextField.setText(simulator.getSelectedCar().currentSpeedToString());
+        carCurrentSpeedTextField.setText(simulator.getSelectedCar().getSpeedText());
     }
     private void updateClutchIsEngagedTextField() {
-        clutchIsEngagedTextField.setText(simulator.getSelectedCar().getGearbox().getClutch().isEngagedToString());
+        clutchIsEngagedTextField.setText(simulator.getSelectedCar().getGearbox().getClutch().getEngagementStatusText());
     }
     private void updateGearboxCurrentGearTextField() {
-        gearboxCurrentGearTextField.setText(simulator.getSelectedCar().getGearbox().currentGearToString());
+        gearboxCurrentGearTextField.setText(simulator.getSelectedCar().getGearbox().getGearText());
     }
     private void updateEngineCurrentRPMTextField() {
-        engineCurrentRPMTextField.setText(simulator.getSelectedCar().getEngine().currentRPMToString());
+        engineCurrentRPMTextField.setText(simulator.getSelectedCar().getEngine().getRpmText());
     }
 
     private void updateAllTextFields() {
         carModelNameTextField.setText(simulator.getSelectedCar().getModelName());
-        carWeightTextField.setText(simulator.getSelectedCar().totalWeightToString());
-        carPriceTextField.setText(simulator.getSelectedCar().totalPriceToString());
+        carWeightTextField.setText(simulator.getSelectedCar().getTotalWeightText());
+        carPriceTextField.setText(simulator.getSelectedCar().getTotalPriceText());
         updateCarCurrentSpeedTextField();
 
         clutchNameTextField.setText(simulator.getSelectedCar().getGearbox().getClutch().getName());
-        clutchWeightTextField.setText(simulator.getSelectedCar().getGearbox().getClutch().weightToString());
-        clutchPriceTextField.setText(simulator.getSelectedCar().getGearbox().getClutch().priceToString());
+        clutchWeightTextField.setText(simulator.getSelectedCar().getGearbox().getClutch().getWeightText());
+        clutchPriceTextField.setText(simulator.getSelectedCar().getGearbox().getClutch().getPriceText());
         updateClutchIsEngagedTextField();
 
         gearboxNameTextField.setText(simulator.getSelectedCar().getGearbox().getName());
-        gearboxWeightTextField.setText(simulator.getSelectedCar().getGearbox().weightToString());
-        gearboxPriceTextField.setText(simulator.getSelectedCar().getGearbox().priceToString());
+        gearboxWeightTextField.setText(simulator.getSelectedCar().getGearbox().getWeightText());
+        gearboxPriceTextField.setText(simulator.getSelectedCar().getGearbox().getPriceText());
         updateGearboxCurrentGearTextField();
 
         engineNameTextField.setText(simulator.getSelectedCar().getEngine().getName());
-        engineWeightTextField.setText(simulator.getSelectedCar().getEngine().weightToString());
-        enginePriceTextField.setText(simulator.getSelectedCar().getEngine().priceToString());
+        engineWeightTextField.setText(simulator.getSelectedCar().getEngine().getWeightText());
+        enginePriceTextField.setText(simulator.getSelectedCar().getEngine().getPriceText());
         updateEngineCurrentRPMTextField();
     }
     private void clearAllTextFields() {
@@ -152,6 +182,8 @@ public class PrimaryController {
     // ComboBox handlers
     @FXML private void handleCarComboBox() {
         if (carSelectionComboBox.getValue() == null) {
+            unsubscribeFromSelectedCar();
+
             deleteCarButton.setDisable(true);
 
             setAllTitledPanesExpanded(false);
@@ -162,6 +194,8 @@ public class PrimaryController {
 
         String plateNumber = carSelectionComboBox.getValue();
         simulator.selectCarByPlateNumber(plateNumber);
+
+        subscribeToSelectedCar();
 
         deleteCarButton.setDisable(false);
 
@@ -202,6 +236,32 @@ public class PrimaryController {
         formStage.show();
     }
     @FXML private void handleDeleteCarButton() {
+        // ComboBox onAction will fire when items change, calling handleCarComboBox()
+        // which will unsubscribe via unsubscribeFromSelectedCar()
         simulator.removeSelectedCar();
+    }
+    @FXML private void handleCarTurnOnButton() {
+        simulator.getSelectedCar().startEngine();
+    }
+    @FXML private void handleCarTurnOffButton() {
+        simulator.getSelectedCar().stopEngine();
+    }
+    @FXML private void handleClutchEngageButton() {
+        simulator.getSelectedCar().releaseClutch();
+    }
+    @FXML private void handleClutchDisengageButton() {
+        simulator.getSelectedCar().pressClutch();
+    }
+    @FXML private void handleGearboxShiftUpButton() {
+        simulator.getSelectedCar().shiftUp();
+    }
+    @FXML private void handleGearboxShiftDownButton() {
+        simulator.getSelectedCar().shiftDown();
+    }
+    @FXML private void handleEngineIncreaseRPMButton() {
+        simulator.getSelectedCar().revUp();
+    }
+    @FXML private void handleEngineDecreaseRPMButton() {
+        simulator.getSelectedCar().revDown();
     }
 }

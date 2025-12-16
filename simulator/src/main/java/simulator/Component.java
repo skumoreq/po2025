@@ -6,7 +6,7 @@ public abstract class Component {
     private final double weight;
     private final double price;
 
-    // «««Constructors»»»
+    // «««Initialization»»»
     public Component(String name, double weight, double price) {
         this.name = name;
         this.weight = weight;
@@ -15,7 +15,7 @@ public abstract class Component {
 
 
 
-    // «««Basic Getters»»»
+    // «««Accessors»»»
     public String getName() {
         return this.name;
     }
@@ -26,11 +26,11 @@ public abstract class Component {
         return this.price;
     }
 
-    // «««String Representations»»»
-    public String weightToString() {
+    // «««Display Methods»»»
+    public String getWeightText() {
         return String.format("%.2f kg", this.weight);
     }
-    public String priceToString() {
+    public String getPriceText() {
         return String.format("%.2f PLN", this.price);
     }
 }

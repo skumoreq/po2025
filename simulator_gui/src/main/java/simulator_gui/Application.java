@@ -12,9 +12,9 @@ public class Application extends javafx.application.Application {
         FXMLLoader fxmlLoader = new FXMLLoader(Application.class.getResource("PrimaryView.fxml"));
         Scene scene = new Scene(fxmlLoader.load());
 
-        primaryStage.initStyle(StageStyle.UTILITY);
+//        primaryStage.initStyle(StageStyle.UTILITY);
         primaryStage.setMaximized(true);
-        primaryStage.setResizable(false);
+//        primaryStage.setResizable(false);
         primaryStage.setTitle("Symulator");
 
         primaryStage.setScene(scene);

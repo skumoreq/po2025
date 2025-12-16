@@ -1,45 +1,61 @@
 package simulator;
 
+import static java.lang.Math.min;
+
 public class Engine extends Component{
+    // «««Class Constants»»»
+    public static final double RPM_IDLE = 800.0;
+    public static final double RPM_STEP = 100.0;
+
+
+
     // «««Core Identity»»»
-    private final double maxRPM;
+    private final double maxRpm;
 
-    // «««Runtime State»»»
-    private double currentRPM;
+    // «««Dynamic State»»»
+    private double rpm = 0.0;
 
-    // «««Constructors»»»
-    public Engine(String name, double weight, double price, double maxRPM) {
+    // «««Initialization»»»
+    public Engine(String name, double weight, double price, double maxRpm) {
         super(name, weight, price);
-        this.maxRPM = maxRPM;
-        this.currentRPM = 0;
+        this.maxRpm = maxRpm;
     }
 
 
 
-    // «««Basic Getters»»»
-    public double getMaxRPM() {
-        return this.maxRPM;
+    // «««Accessors»»»
+    public double getMaxRpm() {
+        return this.maxRpm;
     }
-    public double getCurrentRPM() {
-        return this.currentRPM;
-    }
-
-    // «««String Representations»»»
-    public String maxRPMToString() {
-        return String.format("%.0f RPM", this.maxRPM);
-    }
-    public String currentRPMToString() {
-        return String.format("%.0f RPM%s", this.currentRPM, (this.currentRPM > this.maxRPM * 0.9) ? " ⚠" : "");
+    public double getRpm() {
+        return this.rpm;
     }
 
-
-
-    // «««Action Methods»»»
-    // !!! Not implemented yet !!!
-    public void increaseRPM() {
-
+    // «««Display Methods»»»
+    public String getMaxRpmText() {
+        return String.format("%.0f RPM", this.maxRpm);
     }
-    public void decreaseRPM() {
+    public String getRpmText() {
+        return String.format("%.0f RPM%s", rpm, (rpm > maxRpm * 0.9) ? " ⚠" : "");
+    }
 
+
+
+    // «««Control Methods»»»
+    public void startIdle() {
+        this.rpm = Engine.RPM_IDLE;
+    }
+    public void stop() {
+        this.rpm = 0.0;
+    }
+    public void adjustRpmForGearChange(int previousGear, int gear) {
+        this.rpm += (previousGear - gear) * Engine.RPM_IDLE;
+    }
+    public void increaseRpm() {
+        this.rpm += RPM_STEP;
+        this.rpm = min(this.rpm, this.maxRpm);
+    }
+    public void decreaseRpm() {
+        this.rpm -= RPM_STEP;
     }
 }
