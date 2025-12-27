@@ -1,4 +1,7 @@
-module simulator {
+module com.github.skumoreq.simulator {
     requires javafx.base;
-    exports simulator;
+    requires org.jetbrains.annotations;
+
+    exports com.github.skumoreq.simulator;
+    exports com.github.skumoreq.simulator.exception;
 }

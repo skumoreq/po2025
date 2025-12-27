@@ -1,0 +1,167 @@
+.root {
+    -fx-background-color: whitesmoke;
+
+    -fx-border-color: dimgray;
+    -fx-border-width: 1px;
+
+    -fx-font-family: "Roboto Mono";
+}
+
+.scale-2 {
+    -fx-font-size: 2em;
+}
+.driving-area {
+    -fx-background-image: url("../images/tile.png");
+    -fx-background-repeat: repeat;
+
+    -fx-border-color: dimgray;
+    -fx-border-width: 1px;
+
+    -fx-cursor: crosshair;
+}
+
+.label {
+    -fx-text-fill: dimgray;
+    -fx-font-weight: bold;
+}
+
+.text-field {
+    -fx-background-color: linear-gradient(to bottom, whitesmoke, #e6e6e6);
+    -fx-background-radius: 8px;
+
+    -fx-border-color: dimgray;
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+
+    -fx-text-fill: dimgray;
+    -fx-font-weight: normal;
+
+     -fx-cursor: hand;
+}
+
+.button {
+    -fx-background-color: linear-gradient(to bottom, whitesmoke, #e6e6e6);
+    -fx-background-radius: 8px;
+
+    -fx-border-color: dimgray;
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+
+    -fx-text-fill: dimgray;
+    -fx-font-weight: bold;
+
+    -fx-padding: 4px 8px;
+
+    -fx-cursor: hand;
+}
+.button:hover {
+    -fx-background-color: linear-gradient(to bottom, #808080, dimgray);
+
+    -fx-text-fill: whitesmoke;
+}
+.button:pressed {
+    -fx-scale-x: 0.95;
+    -fx-scale-y: 0.95;
+
+    -fx-background-color: linear-gradient(to bottom, dimgray, #808080);
+}
+
+.combo-box {
+    -fx-background-color: linear-gradient(to bottom, whitesmoke, #e6e6e6);
+    -fx-background-radius: 8px;
+
+    -fx-border-color: dimgray;
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+
+    -fx-cursor: hand;
+}
+.combo-box .list-cell {
+    -fx-text-fill: dimgray;
+    -fx-font-weight: bold;
+}
+.combo-box .arrow {
+    -fx-background-color: dimgray;
+}
+.combo-box .list-view {
+    -fx-background-color: whitesmoke;
+    -fx-background-radius: 0 0 8px 8px;
+
+    -fx-border-color: dimgray;
+    -fx-border-width: 1px;
+    -fx-border-radius: 0 0 8px 8px;
+}
+.combo-box .list-view .list-cell {
+    -fx-background-color: transparent;
+
+    -fx-text-fill: dimgray;
+    -fx-font-weight: normal;
+
+    -fx-cursor: hand;
+}
+.combo-box:hover {
+    -fx-background-color: linear-gradient(to bottom, #808080, dimgray);
+}
+.combo-box:hover .list-cell {
+    -fx-text-fill: whitesmoke;
+}
+.combo-box:hover .arrow {
+    -fx-background-color: whitesmoke;
+}
+.combo-box .list-view .list-cell:hover {
+    -fx-font-weight: bold;
+}
+.combo-box:showing {
+    -fx-background-radius: 8px 8px 0 0;
+    -fx-background-color: linear-gradient(to bottom, #808080, dimgray);
+
+    -fx-border-radius: 8px 8px 0 0;
+}
+.combo-box:showing .list-cell {
+    -fx-text-fill: whitesmoke;
+}
+.combo-box:showing .arrow {
+    -fx-background-color: whitesmoke;
+}
+
+.titled-pane .title {
+    -fx-background-color: linear-gradient(to bottom, whitesmoke, #e6e6e6);
+    -fx-background-radius: 8px;
+
+    -fx-border-color: dimgray;
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+
+    -fx-text-fill: dimgray;
+    -fx-font-weight: bold;
+}
+.titled-pane .content {
+    -fx-background-color: whitesmoke;
+    -fx-background-radius: 0 0 8px 8px;
+
+    -fx-border-color: dimgray;
+    -fx-border-width: 1px;
+    -fx-border-radius: 0 0 8px 8px;
+}
+.titled-pane:expanded .title {
+    -fx-background-radius: 8px 8px 0 0;
+    -fx-border-radius: 8px 8px 0 0;
+}
+
+.tool-bar {
+    -fx-background-color: linear-gradient(to bottom, whitesmoke, #e6e6e6);
+    -fx-background-radius: 8px;
+
+    -fx-border-color: dimgray;
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+}
+
+.text-field:disabled,
+.button:disabled,
+.combo-box:disabled {
+    -fx-opacity: 0.5;
+}
+.combo-box:disabled .list-cell {
+    -fx-opacity: 1.0;
+}
