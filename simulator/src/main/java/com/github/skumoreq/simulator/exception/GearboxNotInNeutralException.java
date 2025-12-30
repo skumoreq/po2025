@@ -1,11 +1,16 @@
 package com.github.skumoreq.simulator.exception;
 
+import com.github.skumoreq.simulator.Gearbox;
+
 /**
- * <p>Thrown when engine start is attempted while the gearbox is not in neutral.</p>
+ * Thrown when attempting to start the car's engine while the gearbox is not in
+ * the neutral state.
+ *
+ * @see Gearbox#isInNeutral()
  */
 public class GearboxNotInNeutralException extends CarException {
 
     public GearboxNotInNeutralException() {
-        super("Engine start attempted while gearbox is not in neutral.");
+        super("Engine start attempted while the gearbox is not in neutral.");
     }
 }

@@ -1,97 +1,202 @@
 package com.github.skumoreq.simulator.gui;
 
-import static com.github.skumoreq.simulator.gui.JavaFxUtils.*;
-import static com.github.skumoreq.simulator.CarManager.CLUTCHES;
-import static com.github.skumoreq.simulator.CarManager.GEARBOXES;
-import static com.github.skumoreq.simulator.CarManager.ENGINES;
-
 import com.github.skumoreq.simulator.Car;
 import com.github.skumoreq.simulator.Clutch;
 import com.github.skumoreq.simulator.Engine;
 import com.github.skumoreq.simulator.Gearbox;
-
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import static com.github.skumoreq.simulator.CarManager.*;
+import static com.github.skumoreq.simulator.gui.JavaFxUtils.*;
 
 public class FormController {
-    // «««Used Plate Numbers List»»» (received from PrimaryController)
-    private List<String> usedPlateNumbers;
+
+    // region > FXML Controllers Shared Data
+
+    private List<String> usedPlateNumbers; // received from PrimaryController
+
     public void setUsedPlateNumbers(List<String> usedPlateNumbers) {
         this.usedPlateNumbers = new ArrayList<>(usedPlateNumbers);
     }
 
-    // «««Created Car»»» (sent to PrimaryController)
-    private Car carBeingCreated;
+    private Car carBeingCreated; // sent to PrimaryController
+
     public Car getCreatedCar() {
         return carBeingCreated;
     }
+    // endregion
 
+    // region > FXML Injected Fields
 
-    // «««JavaFX Scene»»»
+    @FXML
+    private VBox root;
 
-    // «Layout»
-    @FXML private VBox rootVBox;
+    @FXML
+    private TitledPane carSection;
+    @FXML
+    private TitledPane clutchSection;
+    @FXML
+    private TitledPane gearboxSection;
+    @FXML
+    private TitledPane engineSection;
 
-    // «TitledPanes»
-    @FXML private TitledPane carTitledPane;
-    @FXML private TitledPane clutchTitledPane;
-    @FXML private TitledPane gearboxTitledPane;
-    @FXML private TitledPane engineTitledPane;
+    @FXML
+    private ComboBox<String> clutchSelection;
+    @FXML
+    private ComboBox<String> gearboxSelection;
+    @FXML
+    private ComboBox<String> engineSelection;
 
-    // «ComboBoxes»
-    @FXML private ComboBox<String> clutchComboBox;
-    @FXML private ComboBox<String> gearboxComboBox;
-    @FXML private ComboBox<String> engineComboBox;
+    @FXML
+    private Button addCar;
+    @FXML
+    private Button confirm;
 
-    // «Buttons»
-    @FXML private Button addCarButton;
-    @FXML private Button confirmButton;
+    @FXML
+    private TextField carPlateNumber;
+    @FXML
+    private TextField carModelName;
+    @FXML
+    private TextField carTotalWeight;
+    @FXML
+    private TextField carTotalPrice;
+    @FXML
+    private TextField carTopSpeed;
+    @FXML
+    private TextField clutchWeight;
+    @FXML
+    private TextField clutchPrice;
+    @FXML
+    private TextField gearboxWeight;
+    @FXML
+    private TextField gearboxPrice;
+    @FXML
+    private TextField gearboxGearRatios;
+    @FXML
+    private TextField engineWeight;
+    @FXML
+    private TextField enginePrice;
+    @FXML
+    private TextField engineMaxRpm;
+    // endregion
 
-    // «TextFields»
-    @FXML private TextField carPlateNumberTextField;
-    @FXML private TextField carModelNameTextField;
-    @FXML private TextField carWeightTextField;
-    @FXML private TextField carPriceTextField;
-    @FXML private TextField carTopSpeedTextField;
-    @FXML private TextField clutchWeightTextField;
-    @FXML private TextField clutchPriceTextField;
-    @FXML private TextField gearboxWeightTextField;
-    @FXML private TextField gearboxPriceTextField;
-    @FXML private TextField gearboxGearRatiosTextField;
-    @FXML private TextField engineWeightTextField;
-    @FXML private TextField enginePriceTextField;
-    @FXML private TextField engineMaxRpmTextField;
+    // region > Helper Methods
 
-
-    // «««Helper Methods»»»
     private Stage getFormStage() {
-        return (Stage) rootVBox.getScene().getWindow();
+        return (Stage) root.getScene().getWindow();
     }
 
-    private String getPlateNumberErrorMessage() {
+    private boolean isFormComplete() {
+        return !isEmpty(carPlateNumber)
+                && !isEmpty(carModelName)
+                && !isEmpty(gearboxSelection)
+                && !isEmpty(engineSelection);
+    }
+    private boolean isFormBlank() {
+        return isEmpty(carPlateNumber)
+                && isEmpty(carModelName)
+                && isEmpty(gearboxSelection)
+                && isEmpty(engineSelection);
+    }
+
+    private void populateCarSection() {
+        hide(addCar);
+        show(confirm);
+
+        carBeingCreated = new Car(
+                GEARBOXES[getSelectedIndex(gearboxSelection)],
+                ENGINES[getSelectedIndex(engineSelection)],
+                getTrimmedText(carPlateNumber),
+                getTrimmedText(carModelName)
+        );
+
+        carTotalWeight.setText(carBeingCreated.getTotalWeightDisplay());
+        carTotalPrice.setText(carBeingCreated.getTotalPriceDisplay());
+        carTopSpeed.setText(carBeingCreated.getTopSpeedDisplay());
+        expand(carSection);
+    }
+    private void clearCarSection() {
+        // This method is called anytime something changes in the form.
+        addCar.setDisable(!isFormComplete());
+
+        if (!carSection.isExpanded()) return; // avoid reapplying reset logic
+
+        hide(confirm);
+        show(addCar);
+
+        carBeingCreated = null;
+
+        collapse(carSection);
+        clear(carTotalWeight, carTotalPrice, carTopSpeed);
+    }
+
+    private void populateClutchSection() {
+        Clutch clutch = CLUTCHES[getSelectedIndex(clutchSelection)];
+
+        clutchWeight.setText(clutch.getWeightDisplay());
+        clutchPrice.setText(clutch.getPriceDisplay());
+        expand(clutchSection);
+    }
+    private void clearClutchSection() {
+        collapse(clutchSection);
+        clear(clutchWeight, clutchPrice);
+    }
+
+    private void populateGearboxSection() {
+        select(clutchSelection, getSelectedIndex(gearboxSelection));
+
+        Gearbox gearbox = GEARBOXES[getSelectedIndex(gearboxSelection)];
+
+        gearboxWeight.setText(gearbox.getWeightDisplay());
+        gearboxPrice.setText(gearbox.getPriceDisplay());
+        gearboxGearRatios.setText(gearbox.getGearRatiosDisplay());
+        expand(gearboxSection);
+    }
+    private void clearGearboxSection() {
+        clearSelection(clutchSelection);
+
+        collapse(gearboxSection);
+        clear(gearboxWeight, gearboxPrice, gearboxGearRatios);
+    }
+
+    private void populateEngineSection() {
+        Engine engine = ENGINES[getSelectedIndex(engineSelection)];
+
+        engineWeight.setText(engine.getWeightDisplay());
+        enginePrice.setText(engine.getPriceDisplay());
+        engineMaxRpm.setText(engine.getMaxRpmDisplay());
+        expand(engineSection);
+    }
+    private void clearEngineSection() {
+        collapse(engineSection);
+        clear(engineWeight, enginePrice, engineMaxRpm);
+    }
+
+    private @NotNull String getPlateNumberErrorMessage() {
         Pattern pattern = Pattern.compile("^[A-Z]{1,3} [0-9ACE-HJ-NP-Y]{5}$");
         String plateNumber = carBeingCreated.getPlateNumber();
 
         if (!pattern.matcher(plateNumber).matches()) {
             return """
                     Wprowadzony numer rejestracyjny ma nieprawidłowy format.
-
+                    
                     Wymagany format zgodny ze specyfikacją: [LITERY]{1-3} [ZNAKI]{5}
-
+                    
                     Struktura numeru:
                     1. Prefiks literowy: od 1 do 3 wielkich liter (A-Z)
                     2. Separator: pojedyncza spacja
                     3. Sufiks znakowy: dokładnie 5 znaków alfanumerycznych:
                        - cyfry 0-9
                        - litery alfabetu łacińskiego z wyłączeniem: B, D, I, O, Z
-
+                    
                     Uwaga: Niedozwolone jest stosowanie małych liter, znaków specjalnych oraz pominięcie separatora.
                     """;
         }
@@ -107,152 +212,75 @@ public class FormController {
         }
         return "";
     }
+    // endregion
 
-    private boolean isFormEmpty() {
-        return getTrimmedText(carPlateNumberTextField).isEmpty()
-                && getTrimmedText(carModelNameTextField).isEmpty()
-                && isEmpty(gearboxComboBox)
-                && isEmpty(engineComboBox);
-    }
-    private boolean isFormFilled() {
-        return !getTrimmedText(carPlateNumberTextField).isEmpty()
-                && !getTrimmedText(carModelNameTextField).isEmpty()
-                && !isEmpty(gearboxComboBox)
-                && !isEmpty(engineComboBox);
-    }
+    // region > FXML Event Handlers
 
-    private void populateCarTitledPane() {
-        hide(addCarButton);
-        show(confirmButton);
+    @FXML
+    private void initialize() {
+        collapse(carSection, clutchSection, gearboxSection, engineSection);
 
-        carBeingCreated = new Car(
-                GEARBOXES[getSelectedIndex(gearboxComboBox)],
-                ENGINES[getSelectedIndex(engineComboBox)],
-                getTrimmedText(carPlateNumberTextField),
-                getTrimmedText(carModelNameTextField)
-        );
+        for (Clutch clutch : CLUTCHES) clutchSelection.getItems().add(clutch.getName());
+        for (Gearbox gearbox : GEARBOXES) gearboxSelection.getItems().add(gearbox.getName());
+        for (Engine engine : ENGINES) engineSelection.getItems().add(engine.getName());
 
-        carWeightTextField.setText(carBeingCreated.getTotalWeightDisplay());
-        carPriceTextField.setText(carBeingCreated.getTotalPriceDisplay());
-        carTopSpeedTextField.setText(carBeingCreated.getTopSpeedDisplay());
-        expand(carTitledPane);
-    }
-    private void clearCarTitledPane() {
-        addCarButton.setDisable(!isFormFilled());
+        addCar.setDisable(true);
+        hide(confirm);
 
-        if (!carTitledPane.isExpanded()) return;
-
-        hide(confirmButton);
-        show(addCarButton);
-
-        carBeingCreated = null;
-
-        collapse(carTitledPane);
-        clear(carWeightTextField, carPriceTextField, carTopSpeedTextField);
+        carPlateNumber.textProperty().addListener(_ -> clearCarSection());
+        carModelName.textProperty().addListener(_ -> clearCarSection());
     }
 
-    private void populateClutchTitledPane() {
-        Clutch clutch = CLUTCHES[getSelectedIndex(clutchComboBox)];
+    @FXML
+    private void clutchSelectionOnAction() {
+        clearCarSection();
 
-        clutchWeightTextField.setText(clutch.getWeightDisplay());
-        clutchPriceTextField.setText(clutch.getPriceDisplay());
-        expand(clutchTitledPane);
+        if (isEmpty(clutchSelection)) clearClutchSection();
+        else populateClutchSection();
     }
-    private void clearClutchTitledPane() {
-        collapse(clutchTitledPane);
-        clear(clutchWeightTextField, clutchPriceTextField);
+    @FXML
+    private void gearboxSelectionOnAction() {
+        clearCarSection();
+
+        if (isEmpty(gearboxSelection)) clearGearboxSection();
+        else populateGearboxSection();
     }
+    @FXML
+    private void engineSelectionOnAction() {
+        clearCarSection();
 
-    private void populateGearboxTitledPane() {
-        select(clutchComboBox, getSelectedIndex(gearboxComboBox));
-
-        Gearbox gearbox = GEARBOXES[getSelectedIndex(gearboxComboBox)];
-
-        gearboxWeightTextField.setText(gearbox.getWeightDisplay());
-        gearboxPriceTextField.setText(gearbox.getPriceDisplay());
-        gearboxGearRatiosTextField.setText(gearbox.getGearRatiosDisplay());
-        expand(gearboxTitledPane);
-    }
-    private void clearGearboxTitledPane() {
-        clearSelection(clutchComboBox);
-
-        collapse(gearboxTitledPane);
-        clear(gearboxWeightTextField, gearboxPriceTextField, gearboxGearRatiosTextField);
+        if (isEmpty(engineSelection)) clearEngineSection();
+        else populateEngineSection();
     }
 
-    private void populateEngineTitledPane() {
-        Engine engine = ENGINES[getSelectedIndex(engineComboBox)];
-
-        engineWeightTextField.setText(engine.getWeightDisplay());
-        enginePriceTextField.setText(engine.getPriceDisplay());
-        engineMaxRpmTextField.setText(engine.getMaxRpmDisplay());
-        expand(engineTitledPane);
+    @FXML
+    private void addCarOnAction() {
+        populateCarSection();
     }
-    private void clearEngineTitledPane() {
-        collapse(engineTitledPane);
-        clear(engineWeightTextField, enginePriceTextField, engineMaxRpmTextField);
-    }
-
-
-    // «««JavaFX Event Handlers»»»
-    @FXML private void initialize() {
-        collapse(carTitledPane, clutchTitledPane, gearboxTitledPane, engineTitledPane);
-
-        for (Clutch clutch : CLUTCHES) clutchComboBox.getItems().add(clutch.getName());
-        for (Gearbox gearbox : GEARBOXES) gearboxComboBox.getItems().add(gearbox.getName());
-        for (Engine engine : ENGINES) engineComboBox.getItems().add(engine.getName());
-
-        addCarButton.setDisable(true);
-        hide(confirmButton);
-
-        carPlateNumberTextField.textProperty().addListener(ignored -> clearCarTitledPane());
-        carModelNameTextField.textProperty().addListener(ignored -> clearCarTitledPane());
-    }
-
-    // «ComboBox Event Handlers»
-    @FXML private void handleClutchComboBox() {
-        clearCarTitledPane();
-
-        if (clutchComboBox.getValue() == null) clearClutchTitledPane();
-        else populateClutchTitledPane();
-    }
-    @FXML private void handleGearboxComboBox() {
-        clearCarTitledPane();
-
-        if (gearboxComboBox.getValue() == null) clearGearboxTitledPane();
-        else populateGearboxTitledPane();
-    }
-    @FXML private void handleEngineComboBox() {
-        clearCarTitledPane();
-
-        if (engineComboBox.getValue() == null) clearEngineTitledPane();
-        else populateEngineTitledPane();
-    }
-
-    // «Button Event Handlers»
-    @FXML private void handleAddCarButton() {
-        populateCarTitledPane();
-    }
-    @FXML private void handleConfirmButton() {
+    @FXML
+    private void confirmOnAction() {
         String plateNumberErrorMessage = getPlateNumberErrorMessage();
         if (plateNumberErrorMessage.isEmpty()) {
             getFormStage().close();
             return;
         }
 
-        showWarningAlert(rootVBox, "Niepoprawny numer rejestracyjny", plateNumberErrorMessage);
+        showAlertAndWait(
+                Alert.AlertType.WARNING, root, "Niepoprawny numer rejestracyjny", plateNumberErrorMessage);
 
-        clearCarTitledPane(); // waits for warningAlert to close
+        clearCarSection();
     }
-    @FXML private void handleCancelButton() {
-        if (isFormEmpty()) {
+    @FXML
+    private void cancelOnAction() {
+        if (isFormBlank()) {
             getFormStage().close();
             return;
         }
 
-        clear(carPlateNumberTextField, carModelNameTextField);
+        clear(carPlateNumber, carModelName);
 
-        clearSelection(gearboxComboBox);
-        clearSelection(engineComboBox);
+        clearSelection(gearboxSelection); // will also clear clutch selection
+        clearSelection(engineSelection);
     }
+    // endregion
 }

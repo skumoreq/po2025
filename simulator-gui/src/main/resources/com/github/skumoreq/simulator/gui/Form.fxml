@@ -1,88 +1,84 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.layout.*?>
 <?import javafx.scene.control.*?>
-
+<?import javafx.scene.layout.*?>
 
 <VBox xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.github.skumoreq.simulator.gui.FormController"
-      fx:id="rootVBox"
+      fx:id="root"
       prefWidth="400" prefHeight="800"
       spacing="5"
       alignment="CENTER"
       stylesheets="@stylesheets/styles.css">
 
-  <Label maxWidth="350"
-         alignment="CENTER"
-         text="KREATOR SAMOCHODU"
-         styleClass="scale-2"/>
+  <Label text="KREATOR SAMOCHODU"
+         styleClass="scale-large"/>
 
   <GridPane maxWidth="350"
             hgap="10" vgap="5">
     <columnConstraints>
-      <ColumnConstraints percentWidth="50"
-                         halignment="CENTER"/>
+      <ColumnConstraints percentWidth="50"/>
       <ColumnConstraints percentWidth="50"/>
     </columnConstraints>
 
     <Label GridPane.rowIndex="0" GridPane.columnIndex="0"
-           text="Nr. rejestracyjny"/>
-    <TextField fx:id="carPlateNumberTextField"
+           text="Numer rejestracyjny"/>
+    <TextField fx:id="carPlateNumber"
                GridPane.rowIndex="0" GridPane.columnIndex="1"/>
 
     <Label GridPane.rowIndex="1" GridPane.columnIndex="0"
-           text="Nazwa modelu"/>
-    <TextField fx:id="carModelNameTextField"
+           text="Model samochodu"/>
+    <TextField fx:id="carModelName"
                GridPane.rowIndex="1" GridPane.columnIndex="1"/>
   </GridPane>
 
-  <TitledPane fx:id="carTitledPane"
+  <TitledPane fx:id="carSection"
               maxWidth="350">
     <graphic>
-      <HBox prefWidth="325" prefHeight="25"
+      <HBox prefWidth="330" prefHeight="25"
             alignment="CENTER">
-        <Label text="Parametry"/>
+        <Label text="Wynik konfiguracji"/>
         <Region HBox.hgrow="ALWAYS"/>
       </HBox>
     </graphic>
 
     <GridPane hgap="10" vgap="5">
       <columnConstraints>
-        <ColumnConstraints percentWidth="30"
+        <ColumnConstraints percentWidth="40"
                            halignment="RIGHT"/>
-        <ColumnConstraints percentWidth="70"/>
+        <ColumnConstraints percentWidth="60"/>
       </columnConstraints>
 
       <Label GridPane.rowIndex="0" GridPane.columnIndex="0"
-             text="Waga"/>
-      <TextField fx:id="carWeightTextField"
+             text="Masa całkowita"/>
+      <TextField fx:id="carTotalWeight"
                  GridPane.rowIndex="0" GridPane.columnIndex="1"
                  disable="true"/>
 
       <Label GridPane.rowIndex="1" GridPane.columnIndex="0"
-             text="Cena"/>
-      <TextField fx:id="carPriceTextField"
+             text="Cena całkowita"/>
+      <TextField fx:id="carTotalPrice"
                  GridPane.rowIndex="1" GridPane.columnIndex="1"
                  disable="true"/>
 
       <Label GridPane.rowIndex="2" GridPane.columnIndex="0"
-             text="Vmax"/>
-      <TextField fx:id="carTopSpeedTextField"
+             text="Prędkość maks."/>
+      <TextField fx:id="carTopSpeed"
                  GridPane.rowIndex="2" GridPane.columnIndex="1"
                  disable="true"/>
     </GridPane>
   </TitledPane>
 
-  <TitledPane fx:id="clutchTitledPane"
+  <TitledPane fx:id="clutchSection"
               maxWidth="350">
     <graphic>
-      <HBox prefWidth="325" prefHeight="25"
+      <HBox prefWidth="330" prefHeight="25"
             alignment="CENTER">
         <Label text="Sprzęgło"/>
         <Region HBox.hgrow="ALWAYS"/>
-        <ComboBox fx:id="clutchComboBox"
-                  onAction="#handleClutchComboBox"
+        <ComboBox fx:id="clutchSelection"
+                  onAction="#clutchSelectionOnAction"
                   prefWidth="220"
                   disable="true"/>
       </HBox>
@@ -96,28 +92,28 @@
       </columnConstraints>
 
       <Label GridPane.rowIndex="0" GridPane.columnIndex="0"
-             text="Waga"/>
-      <TextField fx:id="clutchWeightTextField"
+             text="Masa części"/>
+      <TextField fx:id="clutchWeight"
                  GridPane.rowIndex="0" GridPane.columnIndex="1"
                  disable="true"/>
 
       <Label GridPane.rowIndex="1" GridPane.columnIndex="0"
-             text="Cena"/>
-      <TextField fx:id="clutchPriceTextField"
+             text="Waga części"/>
+      <TextField fx:id="clutchPrice"
                  GridPane.rowIndex="1" GridPane.columnIndex="1"
                  disable="true"/>
     </GridPane>
   </TitledPane>
 
-  <TitledPane fx:id="gearboxTitledPane"
+  <TitledPane fx:id="gearboxSection"
               maxWidth="350">
     <graphic>
-      <HBox prefWidth="325" prefHeight="25"
+      <HBox prefWidth="330" prefHeight="25"
             alignment="CENTER">
         <Label text="Skrzynia biegów"/>
         <Region HBox.hgrow="ALWAYS"/>
-        <ComboBox fx:id="gearboxComboBox"
-                  onAction="#handleGearboxComboBox"
+        <ComboBox fx:id="gearboxSelection"
+                  onAction="#gearboxSelectionOnAction"
                   prefWidth="190"/>
       </HBox>
     </graphic>
@@ -130,34 +126,38 @@
       </columnConstraints>
 
       <Label GridPane.rowIndex="0" GridPane.columnIndex="0"
-             text="Waga"/>
-      <TextField fx:id="gearboxWeightTextField"
+             text="Masa części"/>
+      <TextField fx:id="gearboxWeight"
                  GridPane.rowIndex="0" GridPane.columnIndex="1"
                  disable="true"/>
 
       <Label GridPane.rowIndex="1" GridPane.columnIndex="0"
-             text="Cena"/>
-      <TextField fx:id="gearboxPriceTextField"
+             text="Cena części"/>
+      <TextField fx:id="gearboxPrice"
                  GridPane.rowIndex="1" GridPane.columnIndex="1"
                  disable="true"/>
 
       <Label GridPane.rowIndex="2" GridPane.columnIndex="0"
-             text="Przełożenie"/>
-      <TextField fx:id="gearboxGearRatiosTextField"
+             text="Przełożenia">
+        <tooltip>
+          <Tooltip text="Kolejne przełożenia biegów od 1. do ostatniego"/>
+        </tooltip>
+      </Label>
+      <TextField fx:id="gearboxGearRatios"
                  GridPane.rowIndex="2" GridPane.columnIndex="1"
                  disable="true"/>
     </GridPane>
   </TitledPane>
 
-  <TitledPane fx:id="engineTitledPane"
+  <TitledPane fx:id="engineSection"
               maxWidth="350">
     <graphic>
-      <HBox prefWidth="325" prefHeight="25"
+      <HBox prefWidth="330" prefHeight="25"
             alignment="CENTER">
         <Label text="Silnik"/>
         <Region HBox.hgrow="ALWAYS"/>
-        <ComboBox fx:id="engineComboBox"
-                  onAction="#handleEngineComboBox"
+        <ComboBox fx:id="engineSelection"
+                  onAction="#engineSelectionOnAction"
                   prefWidth="190"/>
       </HBox>
     </graphic>
@@ -170,37 +170,38 @@
       </columnConstraints>
 
       <Label GridPane.rowIndex="0" GridPane.columnIndex="0"
-             text="Waga"/>
-      <TextField fx:id="engineWeightTextField"
+             text="Masa części"/>
+      <TextField fx:id="engineWeight"
                  GridPane.rowIndex="0" GridPane.columnIndex="1"
                  disable="true"/>
 
       <Label GridPane.rowIndex="1" GridPane.columnIndex="0"
-             text="Cena"/>
-      <TextField fx:id="enginePriceTextField"
+             text="Cena części"/>
+      <TextField fx:id="enginePrice"
                  GridPane.rowIndex="1" GridPane.columnIndex="1"
                  disable="true"/>
 
       <Label GridPane.rowIndex="2" GridPane.columnIndex="0"
-             text="Maks. obroty"/>
-      <TextField fx:id="engineMaxRpmTextField"
+             text="Obroty maks."/>
+      <TextField fx:id="engineMaxRpm"
                  GridPane.rowIndex="2" GridPane.columnIndex="1"
                  disable="true"/>
     </GridPane>
   </TitledPane>
 
-  <HBox maxWidth="300"
+  <HBox maxWidth="250"
         spacing="5">
-    <Button fx:id="addCarButton"
-            onAction="#handleAddCarButton"
-            prefWidth="150"
-            text="▶ Dodaj samochód"/>
-    <Button fx:id="confirmButton"
-            onAction="#handleConfirmButton"
-            prefWidth="150"
+    <Button fx:id="addCar"
+            onAction="#addCarOnAction"
+            prefWidth="125"
+            text="▶ Dodaj auto"/>
+    <Button fx:id="confirm"
+            onAction="#confirmOnAction"
+            prefWidth="125"
             text="▶ Potwierdź"/>
-    <Button onAction="#handleCancelButton"
-            prefWidth="150"
+    <Button onAction="#cancelOnAction"
+            prefWidth="125"
             text="▶ Anuluj"/>
   </HBox>
+
 </VBox>

@@ -1,42 +1,40 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.layout.*?>
-<?import javafx.scene.control.*?>
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
 
-
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.Group?>
 <BorderPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.github.skumoreq.simulator.gui.PrimaryController"
-            fx:id="rootBorderPane"
+            fx:id="root"
             prefWidth="1200" prefHeight="800"
             stylesheets="@stylesheets/styles.css">
 
   <top>
-    <StackPane alignment="CENTER_RIGHT">
+    <StackPane>
       <padding>
-        <Insets top="10" right="10"/>
+        <Insets top="20" right="20" left="390"/>
       </padding>
 
-      <ToolBar maxWidth="800">
+      <ToolBar>
         <Region HBox.hgrow="ALWAYS"/>
-        <HBox spacing="10"
+        <HBox spacing="5"
               alignment="CENTER">
-          <Label text="Nr. rejestracyjny"/>
-          <ComboBox fx:id="carSelectionComboBox"
-                    onAction="#handleCarComboBox"
-                    prefWidth="110"/>
-
-          <HBox maxWidth="300"
-                spacing="5">
-            <Button onAction="#handleAddCarButton"
-                    prefWidth="150"
-                    text="▶ Dodaj samochód"/>
-            <Button fx:id="deleteCarButton"
-                    onAction="#handleDeleteCarButton"
-                    prefWidth="150"
-                    text="▶ Usuń samochód"/>
-          </HBox>
+            <Label text="Numer rejestracyjny"/>
+            <ComboBox fx:id="carSelection"
+                      onAction="#carSelectionOnAction"
+                      prefWidth="125"/>
+            <Button onAction="#addCarOnAction"
+                    prefWidth="125"
+                    text="▶ Dodaj auto"/>
+            <Button fx:id="deleteCar"
+                    onAction="#deleteCarOnAction"
+                    prefWidth="125"
+                    text="▶ Usuń auto"/>
         </HBox>
         <Region HBox.hgrow="ALWAYS"/>
       </ToolBar>
@@ -47,17 +45,17 @@
     <VBox spacing="5"
           alignment="CENTER">
       <padding>
-        <Insets left="10"/>
+        <Insets left="20"/>
       </padding>
 
-      <TitledPane fx:id="carTitledPane"
-                  maxWidth="325">
+      <TitledPane fx:id="carSection"
+                  maxWidth="350">
         <graphic>
-          <HBox prefWidth="300" prefHeight="25"
+          <HBox prefWidth="330" prefHeight="25"
                 alignment="CENTER">
-            <Label text="Samochód"/>
+            <Label text="Wybrany samochód"/>
             <Region HBox.hgrow="ALWAYS"/>
-            <TextField fx:id="carModelNameTextField"
+            <TextField fx:id="carModelName"
                        prefWidth="200"
                        disable="true"/>
           </HBox>
@@ -65,50 +63,58 @@
 
         <GridPane hgap="10" vgap="5">
           <columnConstraints>
-            <ColumnConstraints percentWidth="30"
+            <ColumnConstraints percentWidth="40"
                                halignment="RIGHT"/>
-            <ColumnConstraints percentWidth="70"/>
+            <ColumnConstraints percentWidth="60"/>
           </columnConstraints>
 
           <Label GridPane.rowIndex="0" GridPane.columnIndex="0"
-                 text="Waga"/>
-          <TextField fx:id="carWeightTextField"
+                 text="Masa całkowita"/>
+          <TextField fx:id="carTotalWeight"
                      GridPane.rowIndex="0" GridPane.columnIndex="1"
                      disable="true"/>
 
           <Label GridPane.rowIndex="1" GridPane.columnIndex="0"
-                 text="Cena"/>
-          <TextField fx:id="carPriceTextField"
+                 text="Cena całkowita"/>
+          <TextField fx:id="carTotalPrice"
                      GridPane.rowIndex="1" GridPane.columnIndex="1"
                      disable="true"/>
 
           <Label GridPane.rowIndex="2" GridPane.columnIndex="0"
-                 text="Prędkość"/>
-          <TextField fx:id="carSpeedTextField"
+                 text="Stan silnika"/>
+          <TextField fx:id="carIsEngineOn"
                      GridPane.rowIndex="2" GridPane.columnIndex="1"
                      disable="true"/>
 
-          <HBox maxWidth="300"
+          <Label GridPane.rowIndex="3" GridPane.columnIndex="0"
+                 text="Aktualna prędkość"/>
+          <TextField fx:id="carSpeed"
+                     GridPane.rowIndex="3" GridPane.columnIndex="1"
+                     disable="true"/>
+
+          <HBox maxWidth="330"
                 spacing="5"
-                GridPane.rowIndex="3" GridPane.columnIndex="0" GridPane.columnSpan="2">
-            <Button onAction="#handleStartEngineButton"
-                    prefWidth="150"
+                GridPane.rowIndex="4" GridPane.columnIndex="0" GridPane.columnSpan="2">
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button onAction="#startEngineOnAction"
+                    prefWidth="100"
                     text="▶ Odpal"/>
-            <Button onAction="#handleStopEngineButton"
-                    prefWidth="150"
+            <Button onAction="#stopEngineOnAction"
+                    prefWidth="100"
                     text="▶ Zgaś"/>
+            <Region HBox.hgrow="ALWAYS"/>
           </HBox>
         </GridPane>
       </TitledPane>
 
-      <TitledPane fx:id="clutchTitledPane"
-                  maxWidth="325">
+      <TitledPane fx:id="clutchSection"
+                  maxWidth="350">
         <graphic>
-          <HBox prefWidth="300" prefHeight="25"
+          <HBox prefWidth="330" prefHeight="25"
                 alignment="CENTER">
             <Label text="Sprzęgło"/>
             <Region HBox.hgrow="ALWAYS"/>
-            <TextField fx:id="clutchNameTextField"
+            <TextField fx:id="clutchName"
                        prefWidth="200"
                        disable="true"/>
           </HBox>
@@ -116,140 +122,146 @@
 
         <GridPane hgap="10" vgap="5">
           <columnConstraints>
-            <ColumnConstraints percentWidth="30"
+            <ColumnConstraints percentWidth="40"
                                halignment="RIGHT"/>
-            <ColumnConstraints percentWidth="70"/>
+            <ColumnConstraints percentWidth="60"/>
           </columnConstraints>
 
           <Label GridPane.rowIndex="0" GridPane.columnIndex="0"
-                 text="Waga"/>
-          <TextField fx:id="clutchWeightTextField"
+                 text="Waga części"/>
+          <TextField fx:id="clutchWeight"
                      GridPane.rowIndex="0" GridPane.columnIndex="1"
                      disable="true"/>
 
           <Label GridPane.rowIndex="1" GridPane.columnIndex="0"
-                 text="Cena"/>
-          <TextField fx:id="clutchPriceTextField"
+                 text="Cena części"/>
+          <TextField fx:id="clutchPrice"
                      GridPane.rowIndex="1" GridPane.columnIndex="1"
                      disable="true"/>
 
           <Label GridPane.rowIndex="2" GridPane.columnIndex="0"
-                 text="Stan"/>
-          <TextField fx:id="clutchIsEngagedTextField"
+                 text="Stan mechaniczny"/>
+          <TextField fx:id="clutchIsEngaged"
                      GridPane.rowIndex="2" GridPane.columnIndex="1"
                      disable="true"/>
 
-          <HBox maxWidth="300"
+          <HBox maxWidth="330"
                 spacing="5"
                 GridPane.rowIndex="3" GridPane.columnIndex="0" GridPane.columnSpan="2">
-            <Button onAction="#handleReleaseClutchButton"
-                    prefWidth="150"
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button onAction="#releaseClutchOnAction"
+                    prefWidth="100"
                     text="▶ Zwolnij"/>
-            <Button onAction="#handlePressClutchButton"
-                    prefWidth="150"
+            <Button onAction="#pressClutchOnAction"
+                    prefWidth="100"
                     text="▶ Naciśnij"/>
+            <Region HBox.hgrow="ALWAYS"/>
           </HBox>
         </GridPane>
       </TitledPane>
 
-      <TitledPane fx:id="gearboxTitledPane"
-                  maxWidth="325">
+      <TitledPane fx:id="gearboxSection"
+                  maxWidth="350">
         <graphic>
-          <HBox prefWidth="300" prefHeight="25"
+          <HBox prefWidth="330" prefHeight="25"
                 alignment="CENTER">
             <Label text="Skrzynia biegów"/>
             <Region HBox.hgrow="ALWAYS"/>
-            <TextField fx:id="gearboxNameTextField"
-                       prefWidth="170"
+            <TextField fx:id="gearboxName"
+                       prefWidth="200"
                        disable="true"/>
           </HBox>
         </graphic>
 
         <GridPane hgap="10" vgap="5">
           <columnConstraints>
-            <ColumnConstraints percentWidth="30"
+            <ColumnConstraints percentWidth="40"
                                halignment="RIGHT"/>
-            <ColumnConstraints percentWidth="70"/>
+            <ColumnConstraints percentWidth="60"/>
           </columnConstraints>
 
           <Label GridPane.rowIndex="0" GridPane.columnIndex="0"
-                 text="Waga"/>
-          <TextField fx:id="gearboxWeightTextField"
+                 text="Waga części"/>
+          <TextField fx:id="gearboxWeight"
                      GridPane.rowIndex="0" GridPane.columnIndex="1"
                      disable="true"/>
 
           <Label GridPane.rowIndex="1" GridPane.columnIndex="0"
-                 text="Cena"/>
-          <TextField fx:id="gearboxPriceTextField"
+                 text="Cena części"/>
+          <TextField fx:id="gearboxPrice"
                      GridPane.rowIndex="1" GridPane.columnIndex="1"
                      disable="true"/>
 
           <Label GridPane.rowIndex="2" GridPane.columnIndex="0"
-                 text="Bieg"/>
-          <TextField fx:id="gearboxGearTextField"
+                 text="Wrzucony bieg"/>
+          <TextField fx:id="gearboxGear"
                      GridPane.rowIndex="2" GridPane.columnIndex="1"
                      disable="true"/>
 
-          <HBox maxWidth="300"
+          <HBox maxWidth="330"
                 spacing="5"
                 GridPane.rowIndex="3" GridPane.columnIndex="0" GridPane.columnSpan="2">
-            <Button onAction="#handleShiftUpButton"
-                    prefWidth="150"
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button onAction="#shiftUpOnAction"
+                    prefWidth="125"
                     text="▶ Zwiększ bieg"/>
-            <Button onAction="#handleShiftDownButton"
-                    prefWidth="150"
+            <Button onAction="#shiftDownOnAction"
+                    prefWidth="125"
                     text="▶ Zmniejsz bieg"/>
+            <Region HBox.hgrow="ALWAYS"/>
           </HBox>
         </GridPane>
       </TitledPane>
 
-      <TitledPane fx:id="engineTitledPane"
-                  maxWidth="325">
+      <TitledPane fx:id="engineSection"
+                  maxWidth="350">
         <graphic>
-          <HBox prefWidth="300" prefHeight="25"
+          <HBox prefWidth="330" prefHeight="25"
                 alignment="CENTER">
             <Label text="Silnik"/>
             <Region HBox.hgrow="ALWAYS"/>
-            <TextField fx:id="engineNameTextField"
-                       prefWidth="170"
+            <TextField fx:id="engineName"
+                       prefWidth="200"
                        disable="true"/>
           </HBox>
         </graphic>
 
         <GridPane hgap="10" vgap="5">
           <columnConstraints>
-            <ColumnConstraints percentWidth="30"
+            <ColumnConstraints percentWidth="40"
                                halignment="RIGHT"/>
-            <ColumnConstraints percentWidth="70"/>
+            <ColumnConstraints percentWidth="60"/>
           </columnConstraints>
 
           <Label GridPane.rowIndex="0" GridPane.columnIndex="0"
-                 text="Waga"/>
-          <TextField fx:id="engineWeightTextField"
+                 text="Waga części"/>
+          <TextField fx:id="engineWeight"
                      GridPane.rowIndex="0" GridPane.columnIndex="1"
                      disable="true"/>
 
           <Label GridPane.rowIndex="1" GridPane.columnIndex="0"
-                 text="Cena"/>
-          <TextField fx:id="enginePriceTextField"
+                 text="Cena części"/>
+          <TextField fx:id="enginePrice"
                      GridPane.rowIndex="1" GridPane.columnIndex="1"
                      disable="true"/>
 
           <Label GridPane.rowIndex="2" GridPane.columnIndex="0"
-                 text="Obroty"/>
-          <TextField fx:id="engineRpmTextField"
+                 text="Aktualne obroty"/>
+          <TextField fx:id="engineRpm"
                      GridPane.rowIndex="2" GridPane.columnIndex="1"
                      disable="true"/>
 
-          <HBox maxWidth="300"
+          <HBox maxWidth="330"
                 spacing="5"
                 GridPane.rowIndex="3" GridPane.columnIndex="0" GridPane.columnSpan="2">
-            <Button onAction="#handleRevUpButton"
-                    prefWidth="150"
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button onAction="#revUpOnAction"
+                    prefWidth="125"
                     text="▶ Dodaj gazu"/>
-            <Button onAction="#handleRevDownButton"
-                    prefWidth="150"
+            <Button onAction="#revDownOnAction"
+                    prefWidth="125"
                     text="▶ Ujmij gazu"/>
+            <Region HBox.hgrow="ALWAYS"/>
           </HBox>
         </GridPane>
       </TitledPane>
@@ -261,13 +273,18 @@
       <padding>
         <Insets topRightBottomLeft="20"/>
       </padding>
-      <Pane fx:id="drivingAreaStackPane"
-                 onMouseClicked="#handleDrivingAreaOnMouseClicked"
-                 onMouseMoved="#handleDrivingAreaOnMouseMoved"
-                 styleClass="driving-area">
-        <Label fx:id="cursorPositionTextField"
-                   maxWidth="100"
-                   StackPane.alignment="TOP_LEFT"/>
+
+      <Pane fx:id="drivingArea"
+            onMouseMoved="#drivingAreaOnMouseMoved"
+            onMouseExited="#drivingAreaOnMouseExited"
+            onMouseClicked="#drivingAreaOnMouseClicked"
+            styleClass="driving-area">
+        <Group fx:id="carIconNode">
+          <ImageView fx:id="carIcon" fitWidth="75" preserveRatio="true">
+            <Image url="@images/car.png"/>
+          </ImageView>
+        </Group>
+        <Label fx:id="cursorPointDisplay"/>
       </Pane>
     </StackPane>
   </center>

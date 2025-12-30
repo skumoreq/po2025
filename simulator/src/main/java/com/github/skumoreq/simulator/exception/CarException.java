@@ -1,12 +1,16 @@
 package com.github.skumoreq.simulator.exception;
 
+import com.github.skumoreq.simulator.Car;
+
 /**
- * <p>Base class for all car-related exceptions.</p>
- * <p>Indicates an invalid car state or improper action within the simulator domain.
- * Exception messages are intended for developers and debugging purposes, not end users.</p>
+ * Base class for all {@link Car}-related exceptions.
+ * <p>
+ * Thrown when an operation fails due to an invalid car state.
+ * </p>
  */
 public abstract class CarException extends RuntimeException {
 
+    /** @param message developer-oriented message for debugging purposes */
     public CarException(String message) {
         super(message);
     }

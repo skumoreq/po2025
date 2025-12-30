@@ -1,8 +1,10 @@
 package com.github.skumoreq.simulator.gui;
 
+import javafx.application.Application;
+
 public class Launcher {
 
-    static void main(String[] args) {
-        javafx.application.Application.launch(SimulatorApplication.class, args);
+    static void main() {
+        Application.launch(SimulatorApp.class);
     }
 }

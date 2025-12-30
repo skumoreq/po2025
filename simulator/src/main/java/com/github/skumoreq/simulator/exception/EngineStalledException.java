@@ -1,11 +1,14 @@
 package com.github.skumoreq.simulator.exception;
 
+import com.github.skumoreq.simulator.Engine;
+
 /**
- * <p>Thrown when the engine rpm falls below the idle threshold, causing a stall.</p>
+ * Thrown when engine RPM falls below its defined threshold
+ * ({@value Engine#RPM_IDLE} RPM).
  */
 public class EngineStalledException extends CarException {
 
     public EngineStalledException() {
-        super("Engine stall occurred due to rpm below idle threshold.");
+        super("Engine stalled due to RPM falling below the idle threshold.");
     }
 }

@@ -7,14 +7,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * <p>Manages the collection of cars and provides quick access to a selected car.</p>
- * <p>The cars are stored in an {@link javafx.collections.ObservableList}, so GUI elements
- * like combo boxes can automatically update when cars are added or removed.</p>
- * <p>This class also holds preconfigured clutch, gearbox, and engine components
- * as public constants for easy car creation.</p>
+ * Manages the collection of cars and provides quick access to a selected car.
+ * <p>
+ * The cars are stored in an {@link javafx.collections.ObservableList}, so GUI
+ * elements like combo boxes can automatically update when cars are added or
+ * removed.
+ * </p>
+ * <p>
+ * This class also holds preconfigured clutch, gearbox, and engine components
+ * as public constants for easy car creation.
+ * </p>
  */
 public class CarManager {
-    // region > Class Constants
+
+    // region > Constants
 
     public static final Clutch[] CLUTCHES = {
             new Clutch("Jednotarczowe suche", 8.9, 1400.0),
@@ -39,12 +45,9 @@ public class CarManager {
     };
     // endregion
 
-    // region > Instance Identity
+    // region > Instance Fields
 
     private final ObservableList<Car> cars;
-    // endregion
-
-    // region > Instance State
 
     private Car selectedCar;
     // endregion

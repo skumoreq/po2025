@@ -3,24 +3,24 @@ package com.github.skumoreq.simulator;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * <p>Represents a vehicle gearbox component.</p>
- * <p>It tracks the current and previous gear, and the effective gear ratio.
- * Shifting gears and engaging/disengaging the clutch affects the gear ratio.</p>
+ * Represents a gearbox component.
+ * <p>
+ * Contains a clutch instance and gear ratios for each gear.
+ * Stores the current and previous gear, allows shifting gears, and updates
+ * the effective gear ratio.
+ * </p>
  */
 public class Gearbox extends Component {
 
-    // region > Class Constants
+    // region > Constants
 
     public static final int NUM_GEARS = 5;
     // endregion
 
-    // region > Instance Identity
+    // region > Instance Fields
 
     private final Clutch clutch;
     private final double[] gearRatios;
-    // endregion
-
-    // region > Instance State
 
     private int gear;
     private int previousGear;
@@ -34,8 +34,8 @@ public class Gearbox extends Component {
         this.clutch = new Clutch(clutch);
         this.gearRatios = gearRatios;
 
-        previousGear = 0;
         gear = 0;
+        previousGear = 0;
         gearRatio = 0.0;
     }
     public Gearbox(@NotNull Gearbox gearbox) {
@@ -86,24 +86,36 @@ public class Gearbox extends Component {
 
     // region > Helper Methods
 
+    /** @return true if either the current gear is 0 or the clutch is disengaged */
     public boolean isInNeutral() {
         return gear == 0 || !clutch.isEngaged();
     }
     // endregion
 
     // region > Control Methods
+
+    /** Updates the previous gear to the current gear. */
     public void updatePreviousGear() {
         previousGear = gear;
     }
+    /** Resets the previous gear to neutral (0). */
     public void clearPreviousGear() {
         previousGear = 0;
     }
+
+    /**
+     * Updates the gear ratio to the appropriate value for the current gear.
+     * Sets to 0.0 if the gearbox {@link #isInNeutral()}.
+     */
     public void updateGearRatio() {
         gearRatio = isInNeutral() ? 0.0 : gearRatios[gear - 1];
     }
+
+    /** Shifts the gear up by one, if not already at the highest gear. */
     public void shiftUp() {
         if (gear < NUM_GEARS) gear++;
     }
+    /** Shifts the gear down by one, if not already in neutral. */
     public void shiftDown() {
         if (gear > 0) gear--;
     }

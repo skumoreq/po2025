@@ -3,13 +3,15 @@ package com.github.skumoreq.simulator;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * <p>Represents a point in 2D space with x and y coordinates.</p>
- * <p>Provides basic vector operations such as scaling, addition, distance, angle calculation,
- * and moving towards another point with a specified speed over a time interval.</p>
+ * Represents a point in 2D space with x and y coordinates.
+ * <p>
+ * Provides basic vector operations such as scaling, addition, distance, angle
+ * calculation, and moving towards another point based on speed and time interval.
+ * </p>
  */
 public class Point {
 
-    // region > Instance State
+    // region > Instance Fields
 
     private double x;
     private double y;
@@ -55,44 +57,58 @@ public class Point {
 
     // region > Vector Algebra Methods
 
+    /** @return true if this point has the same coordinates as the given point */
     public boolean equals(@NotNull Point point) {
         return x == point.x && y == point.y;
     }
 
+    /** @return Euclidean distance from the origin (0,0) to this point */
     public double length() {
         return Math.sqrt(x * x + y * y);
     }
+    /** @return angle in degrees between this point and the given point */
     public double angleTo(@NotNull Point point) {
         return Math.toDegrees(Math.atan2(point.y - y, point.x - x));
     }
 
+    /** Multiplies this point’s coordinates by the given scalar. */
     public void scale(double scalar) {
         x *= scalar;
         y *= scalar;
     }
+
+    /** Adds the coordinates of the given point to this point. */
     public void add(@NotNull Point point) {
         x += point.x;
         y += point.y;
     }
+
     /**
-     * <p>Moves this point towards the target point by a distance in meters
-     * determined from the speed and elapsed time.</p>
-     * <p>The movement is constrained so that the point will not overshoot the target.</p>
+     * Moves this point towards the target point by a distance determined
+     * from the speed (km/h) and elapsed time (ms).
+     * <p>
+     * Movement is capped to avoid overshooting the target.
+     * </p>
      *
-     * @param target point to move towards
-     * @param speed in kilometers per hour
-     * @param interval in milliseconds
+     * @param target the point to move towards
+     * @param speed speed in kilometers per hour
+     * @param interval elapsed time in milliseconds
+     * @param distanceScale optional multiplier for the distance
      */
-    public void moveTo(@NotNull Point target, double speed, double interval) {
+    public void moveTo(@NotNull Point target, double speed, double interval, double distanceScale) {
         if (equals(target) || speed <= 0.0 || interval <= 0.0) return;
 
         Point direction = new Point(target.x - x, target.y - y);
 
         double distanceToTarget = direction.length();
-        double distanceToMove = Math.min(speed * interval / 3600.0, distanceToTarget);
+        double distanceToMove = Math.min(distanceScale * speed * interval / 3600.0, distanceToTarget);
 
         direction.scale(distanceToMove / distanceToTarget);
         add(direction);
+    }
+    /** @see #moveTo(Point, double, double, double)  */
+    public void moveTo(@NotNull Point target, double speed, double interval) {
+        moveTo(target, speed, interval, 1.0);
     }
     // endregion
 }

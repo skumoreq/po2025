@@ -1,55 +1,42 @@
 package com.github.skumoreq.simulator.gui;
 
-import static com.github.skumoreq.simulator.gui.JavaFxUtils.*;
-
-import com.github.skumoreq.simulator.Car;
-import com.github.skumoreq.simulator.CarManager;
-import com.github.skumoreq.simulator.Listener;
-import com.github.skumoreq.simulator.Point;
+import com.github.skumoreq.simulator.*;
 import com.github.skumoreq.simulator.exception.CarException;
 import com.github.skumoreq.simulator.exception.ClutchEngagedException;
 import com.github.skumoreq.simulator.exception.EngineStalledException;
 import com.github.skumoreq.simulator.exception.GearboxNotInNeutralException;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.Pane;
-
 import javafx.application.Platform;
-
-import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-
-import javafx.scene.Scene;
-import javafx.scene.control.*;
-import javafx.scene.layout.BorderPane;
-import javafx.stage.Stage;
-import javafx.stage.StageStyle;
-import javafx.stage.Modality;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.geometry.Bounds;
+import javafx.scene.Group;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.effect.MotionBlur;
+import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Pane;
+import javafx.scene.shape.Rectangle;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import javafx.stage.StageStyle;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.net.URL;
 
+import static com.github.skumoreq.simulator.gui.JavaFxUtils.*;
 
 public class PrimaryController implements Listener {
-    // «««Main CarManager Instance»»»
+
     CarManager carManager = new CarManager();
-
     Point cursorPoint = new Point();
-    Image carImage;
-    ImageView carImageView;
 
+    // region > Listener Interface Implementation
 
-    // «««Listener Interface Implementation»»»
-    @Override public void update() {
-        Platform.runLater(() -> {
-            updateDynamicTextFields();
-            updateCarImageView();
-        });
-    }
     private void subscribeToSelectedCar() {
         carManager.getSelectedCar().addListener(this);
     }
@@ -57,214 +44,305 @@ public class PrimaryController implements Listener {
         carManager.getSelectedCar().removeListener(this);
     }
 
+    @Override
+    public void update() {
+        Platform.runLater(() -> {
+            updateDynamicTextFields();
+            updateCarIconTranslation();
+            updateCarIconMotionBlur();
+        });
+    }
+    // endregion
 
-    // «««JavaFX Scene»»»
+    // region > Constants
 
-    // «Layout»
-    @FXML private BorderPane rootBorderPane;
-    @FXML private Pane drivingAreaStackPane;
+    private static final double MIN_BLUR_RADIUS = 10.0;
+    private static final double MAX_BLUR_RADIUS = 63.0;
+    private static final double MIN_SPEED_FOR_BLUR = 50.0;
+    // endregion
 
-    // «TitledPanes»
-    @FXML private TitledPane carTitledPane;
-    @FXML private TitledPane clutchTitledPane;
-    @FXML private TitledPane gearboxTitledPane;
-    @FXML private TitledPane engineTitledPane;
+    // region > FXML Injected Fields
 
-    // «ComboBoxes»
-    @FXML private ComboBox<String> carSelectionComboBox;
+    @FXML
+    private BorderPane root;
 
-    // «Buttons»
-    @FXML private Button deleteCarButton;
+    @FXML
+    private TitledPane carSection;
+    @FXML
+    private TitledPane clutchSection;
+    @FXML
+    private TitledPane gearboxSection;
+    @FXML
+    private TitledPane engineSection;
 
-    // «TextFields»
-    @FXML private TextField carModelNameTextField;
-    @FXML private TextField carWeightTextField;
-    @FXML private TextField carPriceTextField;
-    @FXML private TextField carSpeedTextField;
-    @FXML private TextField clutchNameTextField;
-    @FXML private TextField clutchWeightTextField;
-    @FXML private TextField clutchPriceTextField;
-    @FXML private TextField clutchIsEngagedTextField;
-    @FXML private TextField gearboxNameTextField;
-    @FXML private TextField gearboxWeightTextField;
-    @FXML private TextField gearboxPriceTextField;
-    @FXML private TextField gearboxGearTextField;
-    @FXML private TextField engineNameTextField;
-    @FXML private TextField engineWeightTextField;
-    @FXML private TextField enginePriceTextField;
-    @FXML private TextField engineRpmTextField;
-    @FXML private Label cursorPositionTextField;
+    @FXML
+    private ComboBox<String> carSelection;
 
-    // «Control Groups» (For batch operations; Arrays populated in initialize())
-    private TitledPane[] allTitledPanes;
+    @FXML
+    private Button deleteCar;
+
+    @FXML
+    private TextField carModelName;
+    @FXML
+    private TextField carTotalWeight;
+    @FXML
+    private TextField carTotalPrice;
+    @FXML
+    private TextField carIsEngineOn;
+    @FXML
+    private TextField carSpeed;
+    @FXML
+    private TextField clutchName;
+    @FXML
+    private TextField clutchWeight;
+    @FXML
+    private TextField clutchPrice;
+    @FXML
+    private TextField clutchIsEngaged;
+    @FXML
+    private TextField gearboxName;
+    @FXML
+    private TextField gearboxWeight;
+    @FXML
+    private TextField gearboxPrice;
+    @FXML
+    private TextField gearboxGear;
+    @FXML
+    private TextField engineName;
+    @FXML
+    private TextField engineWeight;
+    @FXML
+    private TextField enginePrice;
+    @FXML
+    private TextField engineRpm;
+    
+    @FXML
+    private Pane drivingArea;
+
+    @FXML
+    private Group carIconNode;
+    @FXML
+    private ImageView carIcon;
+    private Bounds carIconBounds;
+    private ImageView carIconMotionBlur;
+
+    @FXML
+    private Label cursorPointDisplay;
+
+    private TitledPane[] allSections;
     private TextField[] allTextFields;
+    // endregion
+    
+    // region > Helper Methods
 
-
-    // «««Helper Methods»»»
-    private void addCarImageView() {
-        drivingAreaStackPane.getChildren().add(carImageView);
+    private Stage getPrimaryStage() {
+        return (Stage) root.getScene().getWindow();
     }
-    private void removeCarImageView() {
-        drivingAreaStackPane.getChildren().remove(carImageView);
-    }
-    private void updateCarImageView() {
-        carImageView.setLayoutX(carManager.getSelectedCar().getPosition().getX());
-        carImageView.setLayoutY(carManager.getSelectedCar().getPosition().getY());
 
-        if (carManager.getSelectedCar().getPosition().getX() == carManager.getSelectedCar().getDestination().getX()
-        && carManager.getSelectedCar().getPosition().getY() == carManager.getSelectedCar().getDestination().getY()) {
+    private void initializeDrivingAreaClip() {
+        Rectangle clip = new Rectangle();
+        drivingArea.setClip(clip);
+
+        drivingArea.layoutBoundsProperty().addListener((_, _, newBounds) -> {
+            clip.setX(newBounds.getMinX());
+            clip.setY(newBounds.getMinY());
+            clip.setWidth(newBounds.getWidth());
+            clip.setHeight(newBounds.getHeight());
+        });
+    }
+    private void initializeCarIconMotionBlur() {
+        carIconMotionBlur = new ImageView(carIcon.getImage());
+
+        carIconMotionBlur.setFitWidth(carIcon.getFitWidth());
+        carIconMotionBlur.setPreserveRatio(true);
+        carIconMotionBlur.setEffect(new MotionBlur(0.0, 0.0));
+
+        carIconNode.getChildren().add(carIconMotionBlur);
+        carIconMotionBlur.toBack();
+
+        carIconBounds = carIconNode.getBoundsInParent();
+    }
+
+    private void updateCarIconTranslation() {
+        Point position = carManager.getSelectedCar().getPosition();
+
+        carIconNode.setLayoutX(position.getX() - carIconBounds.getWidth() / 2.0);
+        carIconNode.setLayoutY(position.getY() - carIconBounds.getHeight() / 2.0);
+    }
+    private void updateCarIconRotation() {
+        Point position = carManager.getSelectedCar().getPosition();
+        Point destination = carManager.getSelectedCar().getDestination();
+
+        carIconNode.setRotate(position.angleTo(destination));
+    }
+    private void updateCarIconMotionBlur() {
+        Car car = carManager.getSelectedCar();
+        Point position = car.getPosition();
+        Point destination = car.getDestination();
+
+        double speed = car.getSpeed();
+        double topSpeed = car.calculateTopSpeed();
+
+        if (speed < MIN_SPEED_FOR_BLUR || position.equals(destination)) {
+            carIconMotionBlur.setOpacity(0.0);
             return;
         }
-        carImageView.setRotate(carManager.getSelectedCar().getPosition().angleTo(carManager.getSelectedCar().getDestination()));
+
+        // Linearly interpolate radius based on speed.
+        double radius = (MIN_BLUR_RADIUS * (topSpeed - speed) + MAX_BLUR_RADIUS * (speed - MIN_SPEED_FOR_BLUR))
+                / (topSpeed - MIN_SPEED_FOR_BLUR);
+
+        MotionBlur motionBlur = (MotionBlur) carIconMotionBlur.getEffect();
+        motionBlur.setRadius(radius);
+
+        carIconMotionBlur.setOpacity(1.0);
     }
 
-    private void handleCarException(CarException e) {
-        String title;
-        String message;
+    private void updateStaticTextFields() {
+        Car car = carManager.getSelectedCar();
+        Clutch clutch = carManager.getSelectedCar().getGearbox().getClutch();
+        Gearbox gearbox = carManager.getSelectedCar().getGearbox();
+        Engine engine = carManager.getSelectedCar().getEngine();
 
-        switch (e) {
-            case GearboxNotInNeutralException ignored -> {
-                title = "Nie można uruchomić silnika";
-                message = """
+        carModelName.setText(car.getModelName());
+        carTotalWeight.setText(car.getTotalWeightDisplay());
+        carTotalPrice.setText(car.getTotalPriceDisplay());
+
+        clutchName.setText(clutch.getName());
+        clutchWeight.setText(clutch.getWeightDisplay());
+        clutchPrice.setText(clutch.getPriceDisplay());
+
+        gearboxName.setText(gearbox.getName());
+        gearboxWeight.setText(gearbox.getWeightDisplay());
+        gearboxPrice.setText(gearbox.getPriceDisplay());
+
+        engineName.setText(engine.getName());
+        engineWeight.setText(engine.getWeightDisplay());
+        enginePrice.setText(engine.getPriceDisplay());
+    }
+    private void updateDynamicTextFields() {
+        Car car = carManager.getSelectedCar();
+        Clutch clutch = carManager.getSelectedCar().getGearbox().getClutch();
+        Gearbox gearbox = carManager.getSelectedCar().getGearbox();
+        Engine engine = carManager.getSelectedCar().getEngine();
+
+        carIsEngineOn.setText(car.getEngineStatusDisplay());
+        carSpeed.setText(car.getSpeedDisplay());
+
+        clutchIsEngaged.setText(clutch.getEngagementStatusDisplay());
+        gearboxGear.setText(gearbox.getGearDisplay());
+        engineRpm.setText(engine.getRpmDisplay());
+    }
+
+    private void populateEverySection() {
+        carManager.setSelectedCarByPlateNumber(carSelection.getValue());
+
+        subscribeToSelectedCar();
+
+        deleteCar.setDisable(false);
+        updateStaticTextFields();
+        updateDynamicTextFields();
+        expand(allSections);
+    }
+    private void clearEverySection() {
+        unsubscribeFromSelectedCar();
+
+        deleteCar.setDisable(true);
+        collapse(allSections);
+        clear(allTextFields);
+    }
+
+    private void handleCarException(@NotNull CarException exception) {
+        Alert.AlertType alertType;
+        String header;
+        String content;
+
+        switch (exception) {
+            case GearboxNotInNeutralException _ -> {
+                alertType = Alert.AlertType.INFORMATION;
+                header = "Nie można uruchomić silnika";
+                content = """
                         Silnik nie może zostać uruchomiony, ponieważ samochód jest w biegu.
                         
                         Proszę wrzucić bieg neutralny i spróbować ponownie.
                         """;
             }
-            case EngineStalledException ignored -> {
-                title = "Silnik zgasł";
-                message = """
+            case EngineStalledException _ -> {
+                alertType = Alert.AlertType.ERROR;
+                header = "Silnik zgasł";
+                content = """
                         Silnik zgasł, ponieważ obroty spadły poniżej minimalnego poziomu.
                         
                         Proszę ponownie uruchomić silnik i utrzymywać odpowiednie obroty.
                         """;
             }
-            case ClutchEngagedException ignored -> {
-                title = "Nie można zmienić biegu";
-                message = """
+            case ClutchEngagedException _ -> {
+                alertType = Alert.AlertType.INFORMATION;
+                header = "Nie można zmienić biegu";
+                content = """
                         Sprzęgło nie zostało wciśnięte, dlatego zmiana biegu jest niemożliwa.
                         
                         Wciśnij sprzęgło i spróbuj ponownie, aby uniknąć uszkodzenia skrzyni biegów.
                         """;
             }
-            default -> {
-                title = "Błąd samochodu";
-                message = "";
-            }
+            default -> throw exception;
         }
 
-        showWarningAlert(rootBorderPane, title, message);
+        showAlertAndWait(alertType, root, header, content);
     }
+    // endregion
 
-    private Stage getPrimaryStage() {
-        return (Stage) rootBorderPane.getScene().getWindow();
-    }
-
-    private void updateStaticTextFields() {
-        Car car = carManager.getSelectedCar();
-
-        carModelNameTextField.setText(car.getModelName());
-        carWeightTextField.setText(car.getTotalWeightDisplay());
-        carPriceTextField.setText(car.getTotalPriceDisplay());
-
-        clutchNameTextField.setText(car.getGearbox().getClutch().getName());
-        clutchWeightTextField.setText(car.getGearbox().getClutch().getWeightDisplay());
-        clutchPriceTextField.setText(car.getGearbox().getClutch().getPriceDisplay());
-
-        gearboxNameTextField.setText(car.getGearbox().getName());
-        gearboxWeightTextField.setText(car.getGearbox().getWeightDisplay());
-        gearboxPriceTextField.setText(car.getGearbox().getPriceDisplay());
-
-        engineNameTextField.setText(car.getEngine().getName());
-        engineWeightTextField.setText(car.getEngine().getWeightDisplay());
-        enginePriceTextField.setText(car.getEngine().getPriceDisplay());
-    }
-    private void updateDynamicTextFields() {
-        Car car = carManager.getSelectedCar();
-
-        carSpeedTextField.setText(car.getSpeedDisplay());
-        clutchIsEngagedTextField.setText(car.getGearbox().getClutch().getEngagementStatusDisplay());
-        gearboxGearTextField.setText(car.getGearbox().getGearDisplay());
-        engineRpmTextField.setText(car.getEngine().getRpmDisplay());
-    }
-
-
-    // «««JavaFX Event Handlers»»»
-    @FXML private void initialize() {
-        allTitledPanes = new TitledPane[] {
-                carTitledPane, clutchTitledPane,
-                gearboxTitledPane, engineTitledPane
+    // region > FXML Event Handlers
+    
+    @FXML
+    private void initialize() {
+        allSections = new TitledPane[] {
+                carSection, clutchSection,
+                gearboxSection, engineSection
         };
         allTextFields = new TextField[] {
-                carModelNameTextField, carWeightTextField, carPriceTextField, carSpeedTextField,
-                clutchNameTextField, clutchWeightTextField, clutchPriceTextField, clutchIsEngagedTextField,
-                gearboxNameTextField, gearboxWeightTextField, gearboxPriceTextField, gearboxGearTextField,
-                engineNameTextField, engineWeightTextField, enginePriceTextField, engineRpmTextField
+                carModelName, carTotalWeight, carTotalPrice, carIsEngineOn, carSpeed,
+                clutchName, clutchWeight, clutchPrice, clutchIsEngaged,
+                gearboxName, gearboxWeight, gearboxPrice, gearboxGear,
+                engineName, engineWeight, enginePrice, engineRpm
         };
 
-        deleteCarButton.setDisable(true);
-        collapse(allTitledPanes);
+        initializeDrivingAreaClip();
+        initializeCarIconMotionBlur();
 
-        carManager.getCars().addListener((ListChangeListener<Car>) ignored -> {
+        carIconNode.setVisible(false);
+        deleteCar.setDisable(true);
+        collapse(allSections);
+
+        carManager.getCars().addListener((ListChangeListener<Car>) _ -> {
             ObservableList<String> items = FXCollections.observableArrayList();
             for (Car car : carManager.getCars()) items.add(car.getPlateNumber());
-            carSelectionComboBox.setItems(items);
+            carSelection.setItems(items);
         });
-
-        URL carImageUrl = SimulatorApplication.class.getResource("images/car.png");
-        if (carImageUrl == null)
-            throw new IllegalStateException("Could not find 'car.png' in SimulatorApplication path");
-
-        carImage = new Image(carImageUrl.toExternalForm());
-        carImageView = new ImageView(carImage);
-        carImageView.setFitWidth(100);
-        carImageView.setPreserveRatio(true);
     }
-
-    // «Layout Event Handlers»
-    @FXML private void handleDrivingAreaOnMouseClicked() {
-        carManager.getSelectedCar().getDestination().setX(cursorPoint.getX());
-        carManager.getSelectedCar().getDestination().setY(cursorPoint.getY());
-    }
-    @FXML private void handleDrivingAreaOnMouseMoved(MouseEvent event) {
-        cursorPoint.setX(event.getX());
-        cursorPoint.setY(event.getY());
-        cursorPositionTextField.setText(cursorPoint.getPointDisplay());
-    }
-
-    // «ComboBox Event Handlers»
-    @FXML private void handleCarComboBox() {
-        if (isEmpty(carSelectionComboBox)) {
-            unsubscribeFromSelectedCar();
-
-            deleteCarButton.setDisable(true);
-            collapse(allTitledPanes);
-            clear(allTextFields);
-            removeCarImageView();
-
+    
+    @FXML
+    private void carSelectionOnAction() {
+        if (isEmpty(carSelection)) {
+            carIconNode.setVisible(false);
+            clearEverySection();
             return;
         }
 
-        String plateNumber = carSelectionComboBox.getValue();
-        carManager.setSelectedCarByPlateNumber(plateNumber);
-
-        subscribeToSelectedCar();
-
-        deleteCarButton.setDisable(false);
-        addCarImageView();
-        updateCarImageView();
-        updateStaticTextFields();
-        updateDynamicTextFields();
-        expand(allTitledPanes);
+        populateEverySection();
+        updateCarIconTranslation();
+        updateCarIconRotation();
+        updateCarIconMotionBlur();
+        carIconNode.setVisible(true);
     }
-
-    // «Button Event Handlers»
-    @FXML private void handleAddCarButton() throws IOException {
-        rootBorderPane.setOpacity(0.5);
+    
+    @FXML
+    private void addCarOnAction() throws IOException {
+        root.setOpacity(0.5);
 
         Stage formStage = new Stage();
 
-        FXMLLoader fxmlLoader = new FXMLLoader(SimulatorApplication.class.getResource("FormView.fxml"));
+        FXMLLoader fxmlLoader = new FXMLLoader(SimulatorApp.class.getResource("Form.fxml"));
         Scene scene = new Scene(fxmlLoader.load());
 
         FormController formController = fxmlLoader.getController();
@@ -274,80 +352,113 @@ public class PrimaryController implements Listener {
         formStage.initModality(Modality.WINDOW_MODAL);
         formStage.initOwner(getPrimaryStage());
 
-        // Listen for window close
-        formStage.setOnHidden(ignored -> {
-            rootBorderPane.setOpacity(1.0);
-
+        formStage.setOnHidden(_ -> {
             Car createdCar = formController.getCreatedCar();
-            if (createdCar != null) carManager.addCar(createdCar);
+            carManager.addCar(createdCar);
+            root.setOpacity(1.0);
         });
 
         formStage.setScene(scene);
         formStage.show();
     }
-    @FXML private void handleDeleteCarButton() {
+    @FXML
+    private void deleteCarOnAction() {
         // ComboBox onAction will fire when items change, calling handleCarComboBox()
         // which will unsubscribe via unsubscribeFromSelectedCar()
         carManager.removeSelectedCar();
     }
 
-    @FXML private void handleStartEngineButton() {
+    @FXML
+    private void startEngineOnAction() {
         try {
             carManager.getSelectedCar().startEngine();
-        } catch (CarException e) {
-            handleCarException(e);
+        } catch (CarException exception) {
+            handleCarException(exception);
         }
     }
-    @FXML private void handleStopEngineButton() {
+    @FXML
+    private void stopEngineOnAction() {
         try {
             carManager.getSelectedCar().stopEngine();
-        } catch (CarException e) {
-            handleCarException(e);
+        } catch (CarException exception) {
+            handleCarException(exception);
         }
     }
 
-    @FXML private void handleReleaseClutchButton() {
+    @FXML
+    private void releaseClutchOnAction() {
         try {
             carManager.getSelectedCar().releaseClutch();
-        } catch (CarException e) {
-            handleCarException(e);
+        } catch (CarException exception) {
+            handleCarException(exception);
         }
     }
-    @FXML private void handlePressClutchButton() {
+    @FXML
+    private void pressClutchOnAction() {
         try {
             carManager.getSelectedCar().pressClutch();
-        } catch (CarException e) {
-            handleCarException(e);
+        } catch (CarException exception) {
+            handleCarException(exception);
         }
     }
 
-    @FXML private void handleShiftUpButton() {
+    @FXML
+    private void shiftUpOnAction() {
         try {
             carManager.getSelectedCar().shiftUp();
-        } catch (CarException e) {
-            handleCarException(e);
+        } catch (CarException exception) {
+            handleCarException(exception);
         }
     }
-    @FXML private void handleShiftDownButton() {
+    @FXML
+    private void shiftDownOnAction() {
         try {
             carManager.getSelectedCar().shiftDown();
-        } catch (CarException e) {
-            handleCarException(e);
+        } catch (CarException exception) {
+            handleCarException(exception);
         }
     }
 
-    @FXML private void handleRevUpButton() {
+    @FXML
+    private void revUpOnAction() {
         try {
             carManager.getSelectedCar().revUp();
-        } catch (CarException e) {
-            handleCarException(e);
+        } catch (CarException exception) {
+            handleCarException(exception);
         }
     }
-    @FXML private void handleRevDownButton() {
+    @FXML
+    private void revDownOnAction() {
         try {
             carManager.getSelectedCar().revDown();
-        } catch (CarException e) {
-            handleCarException(e);
+        } catch (CarException exception) {
+            handleCarException(exception);
         }
     }
+
+    @FXML
+    private void drivingAreaOnMouseMoved(@NotNull MouseEvent mouseEvent) {
+        cursorPoint.setX(mouseEvent.getX());
+        cursorPoint.setY(mouseEvent.getY());
+
+        cursorPointDisplay.setText(cursorPoint.getPointDisplay());
+    }
+    @FXML
+    private void drivingAreaOnMouseExited() {
+        cursorPointDisplay.setText("");
+    }
+    @FXML
+    private void drivingAreaOnMouseClicked() {
+        Car car = carManager.getSelectedCar();
+
+        if (!car.isEngineOn()) return;
+
+        Point destination = car.getDestination();
+
+        destination.setX(cursorPoint.getX());
+        destination.setY(cursorPoint.getY());
+
+        updateCarIconRotation();
+    }
+    // endregion
 }

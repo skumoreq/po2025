@@ -3,12 +3,14 @@ package com.github.skumoreq.simulator;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * <p>Represents a vehicle clutch component.</p>
- * <p>The clutch can be engaged or disengaged, which affects the gearbox operation.</p>
+ * Represents a clutch component.
+ * <p>
+ * Can be engaged or disengaged, affecting gearbox and engine operation.
+ * </p>
  */
 public class Clutch extends Component{
 
-    // region > Instance State
+    // region > Instance Fields
 
     private boolean isEngaged;
     // endregion
@@ -35,15 +37,17 @@ public class Clutch extends Component{
     // region > Display Methods
 
     public String getEngagementStatusDisplay() {
-        return isEngaged ? "zaciśnięte" : "rozłączone";
+        return isEngaged ? "Zaciśnięte" : "Rozłączone";
     }
     // endregion
 
     // region > Control Methods
 
+    /** Engages the clutch, mechanically coupling the engine and gearbox. */
     public void engage() {
         isEngaged = true;
     }
+    /** Disengages the clutch, allowing gear changes. */
     public void disengage() {
         isEngaged = false;
     }

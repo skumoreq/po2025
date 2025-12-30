@@ -1,12 +1,14 @@
 package com.github.skumoreq.simulator;
 
 /**
- * <p>Base class for vehicle components.</p>
- * <p>Stores common properties such as name, weight, and price.</p>
+ * Base class for all {@link Car} components.
+ * <p>
+ * Each component has a name, weight (kg) and price (zł) field.
+ * </p>
  */
 public abstract class Component {
 
-    // region > Instance Identity
+    // region > Instance Fields
 
     private final String name;
     private final double weight;
@@ -38,7 +40,7 @@ public abstract class Component {
     // region > Display Methods
 
     public String getWeightDisplay() {
-        return String.format("%.2f kg", weight);
+        return String.format("%.1f kg", weight);
     }
     public String getPriceDisplay() {
         return String.format("%.2f zł", price);

@@ -1,30 +1,42 @@
 package com.github.skumoreq.simulator;
 
-import com.github.skumoreq.simulator.exception.*;
+import com.github.skumoreq.simulator.exception.CarException;
+import com.github.skumoreq.simulator.exception.ClutchEngagedException;
+import com.github.skumoreq.simulator.exception.EngineStalledException;
+import com.github.skumoreq.simulator.exception.GearboxNotInNeutralException;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * <p>Represents a car with a clutch, a gearbox, and an engine.</p>
- * <p>This class provides the following functionality:</p>
+ * Represents a car with a clutch, a gearbox, and an engine.
+ * <p>
+ * This class provides the following functionality:
+ * </p>
  * <ul>
+ *   <li>Runs driving simulation in a separate thread.</li>
+ *   <li>Notifies registered listeners of state changes via the observer pattern.</li>
  *   <li>Tracks position, destination, engine state, and speed.</li>
- *   <li>Runs driving simulation in a separate <b>thread</b>.</li>
- *   <li>Notifies registered listeners of state changes via the <b>observer pattern</b>.</li>
  *   <li>Provides control methods for its components, which may throw appropriate
  *   {@link CarException} subclasses.</li>
  * </ul>
+ *
+ * @see Clutch
+ * @see Gearbox
+ * @see Engine
  */
 public class Car extends Thread {
+
     // region > Thread Implementation
 
-    private static final int THREAD_SLEEP = 100;
+    private static final int THREAD_SLEEP = 50;
 
     @Override
     public void run() {
         while (true) {
-            synchronized (this) { driveToDestination(); }
+            synchronized (this) {
+                driveToDestination();
+            }
             try { //noinspection BusyWait
                 Thread.sleep(THREAD_SLEEP);
             }
@@ -40,7 +52,7 @@ public class Car extends Thread {
     private final List<Listener> listeners = new ArrayList<>();
 
     public void addListener(Listener listener) {
-        // Ensures no null objects or duplicate listeners
+        // Ensures no null objects or duplicate listeners are added.
         if (listener == null || listeners.contains(listener)) return;
         listeners.add(listener);
     }
@@ -48,26 +60,21 @@ public class Car extends Thread {
         listeners.remove(listener);
     }
     private void notifyListeners() {
-        // Create a copy in case a listener tries to unsubscribe during update()
+        // Create a copy in case a listener tries to unsubscribe during update().
         List<Listener> listenersCopy = new ArrayList<>(listeners);
         for (Listener listener : listenersCopy) listener.update();
     }
     // endregion
 
-    // region > Class Constants
+    // region > Constants
 
     public static final double WEIGHT_CONSTANT = 1000.0;
-    public static final double SPEED_CONSTANT = 0.03;
+    public static final double PRICE_CONSTANT = 800.0;
+    public static final double PRICE_MULTIPLIER = 1.23;
+    public static final double SPEED_MULTIPLIER = 0.03;
     // endregion
 
-    // region > Class Methods
-
-    public static double calculateSpeed(double rpm, double gearRatio) {
-        return gearRatio > 0.0 ? rpm / gearRatio * SPEED_CONSTANT : 0.0;
-    }
-    // endregion
-
-    // region > Instance Identity
+    // region > Instance Fields
 
     private final Gearbox gearbox;
     private final Engine engine;
@@ -75,9 +82,6 @@ public class Car extends Thread {
     private final String modelName;
     private final Point position;
     private final Point destination;
-    // endregion
-
-    // region > Instance State
 
     private boolean isEngineOn;
     private double speed;
@@ -91,8 +95,8 @@ public class Car extends Thread {
         this.plateNumber = plateNumber;
         this.modelName = modelName;
 
-        position = new Point();
-        destination = new Point();
+        position = new Point(100, 100);
+        destination = new Point(position);
 
         isEngineOn = false;
         speed = 0.0;
@@ -121,48 +125,75 @@ public class Car extends Thread {
     public Point getDestination() {
         return destination;
     }
+    public boolean isEngineOn() {
+        return isEngineOn;
+    }
+    public double getSpeed() {
+        return speed;
+    }
     // endregion
 
     // region > Calculations
 
-    public double calculateTopSpeed() {
-        return calculateSpeed(engine.getMaxRpm(), gearbox.getGearRatios()[Gearbox.NUM_GEARS - 1]);
-    }
     public double calculateTotalWeight() {
-        return gearbox.getClutch().getWeight() + gearbox.getWeight() + engine.getWeight() + WEIGHT_CONSTANT;
+        double baseWeight = gearbox.getClutch().getWeight() + gearbox.getWeight() + engine.getWeight();
+        return baseWeight + WEIGHT_CONSTANT;
     }
     public double calculateTotalPrice() {
-        return gearbox.getClutch().getPrice() + gearbox.getPrice() + engine.getPrice();
+        double basePrice = gearbox.getClutch().getPrice() + gearbox.getPrice() + engine.getPrice();
+        return (basePrice + PRICE_CONSTANT) * PRICE_MULTIPLIER;
+    }
+    public double calculateTopSpeed() {
+        return calculateSpeed(engine.getMaxRpm(), gearbox.getGearRatios()[Gearbox.NUM_GEARS - 1]);
     }
     // endregion
 
     // region > Display Methods
 
-    public String getSpeedDisplay() {
-        return String.format("%.0f km/h", speed);
-    }
-    public String getTopSpeedDisplay() {
-        return String.format("%.0f km/h", calculateTopSpeed());
-    }
     public String getTotalWeightDisplay() {
-        return String.format("%.2f kg", calculateTotalWeight());
+        return String.format("%.1f kg", calculateTotalWeight());
     }
     public String getTotalPriceDisplay() {
         return String.format("%.2f zł", calculateTotalPrice());
     }
+    public String getTopSpeedDisplay() {
+        return String.format("%.0f km/h", calculateTopSpeed());
+    }
+    public String getEngineStatusDisplay() {
+        return isEngineOn ? "Włączony" : "Wyłączony";
+    }
+    public String getSpeedDisplay() {
+        return String.format("%.0f km/h", speed);
+    }
     // endregion
 
-    // region > Control Methods
+    // region > Helper Methods
 
+    /** @return speed from given RPM and gear ratio */
+    private double calculateSpeed(double rpm, double gearRatio) {
+        return gearRatio > 0.0 ? rpm / gearRatio * SPEED_MULTIPLIER : 0.0;
+    }
+
+    /** Updates the current speed using current RPM and gear ratio. */
     private void updateSpeed() {
         speed = calculateSpeed(engine.getRpm(), gearbox.getGearRatio());
     }
+
+    /**
+     * Stops the engine if RPM drops below idle.
+     * Should be called anytime RPM could decrease.
+     *
+     * @throws EngineStalledException if the engine stalls
+     */
     private void handlePossibleEngineStall() {
         if (engine.getRpm() < Engine.RPM_IDLE) {
             stopEngine();
             throw new EngineStalledException();
         }
     }
+    // endregion
+
+    // region > Control Methods
 
     public void startEngine() {
         if (isEngineOn) return;
@@ -170,8 +201,7 @@ public class Car extends Thread {
 
         isEngineOn = true;
         engine.start();
-
-        gearbox.clearPreviousGear(); // sets previousGear to 0, so that adjustRpmAfterGearChange works correctly
+        gearbox.clearPreviousGear(); // required for correct RPM adjustment after first gear change
 
         notifyListeners();
     }
@@ -180,8 +210,7 @@ public class Car extends Thread {
 
         isEngineOn = false;
         engine.stop();
-
-        updateSpeed(); // sets speed to 0, because after stop() rpm is set to 0
+        updateSpeed();
 
         notifyListeners();
     }
@@ -192,7 +221,7 @@ public class Car extends Thread {
         gearbox.getClutch().disengage();
 
         gearbox.updatePreviousGear();
-        gearbox.updateGearRatio(); // sets gear ratio to 0.0, because car is in neutral
+        gearbox.updateGearRatio();
 
         notifyListeners();
     }
@@ -248,7 +277,7 @@ public class Car extends Thread {
     public void driveToDestination() {
         if (!isEngineOn) return;
 
-        position.moveTo(destination, speed, THREAD_SLEEP);
+        position.moveTo(destination, speed, THREAD_SLEEP, 5.0);
 
         notifyListeners();
     }

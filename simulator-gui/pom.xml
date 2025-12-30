@@ -26,7 +26,19 @@
 
     <dependency>
       <groupId>org.openjfx</groupId>
+      <artifactId>javafx-controls</artifactId>
+      <version>21.0.6</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.openjfx</groupId>
       <artifactId>javafx-fxml</artifactId>
+      <version>21.0.6</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.openjfx</groupId>
+      <artifactId>javafx-graphics</artifactId>
       <version>21.0.6</version>
     </dependency>
 
@@ -42,7 +54,7 @@
           <execution>
             <id>default-cli</id>
             <configuration>
-              <mainClass>com.github.skumoreq.simulator.gui/com.github.skumoreq.simulator.gui.Launcher</mainClass>
+              <mainClass>com.github.skumoreq.simulator.gui.Launcher</mainClass>
               <launcher>simulator-gui</launcher>
               <jlinkImageName>simulator-gui-image</jlinkImageName>
               <jlinkZipName>simulator-gui.zip</jlinkZipName>
