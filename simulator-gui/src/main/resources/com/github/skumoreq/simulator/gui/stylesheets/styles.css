@@ -26,11 +26,18 @@
     -fx-font-size: 2em;
 }
 
-.driving-area {
+.driving-area-border {
     -fx-border-width: 1px;
     -fx-border-color: -ui-secondary;
+    -fx-border-radius: 16px;
 
-    -fx-background-image: url("../images/tile.png");
+    -fx-background-color: linear-gradient(to bottom right, -ui-primary, -ui-primary-soft, -ui-primary);
+    -fx-background-radius: 16px;
+}
+
+.driving-area {
+    -fx-background-image: url("../images/background.png");
+    -fx-background-size: 300px auto;
     -fx-background-repeat: repeat;
     -fx-cursor: crosshair;
 }
@@ -89,7 +96,8 @@
 .combo-box {
     -fx-cursor: hand;
 }
-.combo-box:hover {
+.combo-box:hover,
+.combo-box:focused {
     -fx-background-color: linear-gradient(to bottom, -ui-secondary-soft, -ui-secondary);
 }
 .combo-box:showing {
@@ -103,6 +111,7 @@
     -fx-background-color: -ui-secondary;
 }
 .combo-box:hover .arrow,
+.combo-box:focused .arrow,
 .combo-box:showing .arrow {
     -fx-background-color: -ui-primary;
 }
@@ -112,6 +121,7 @@
     -fx-text-fill: -ui-secondary;
 }
 .combo-box:hover .list-cell,
+.combo-box:focused .list-cell,
 .combo-box:showing .list-cell {
     -fx-text-fill: -ui-primary;
 }
@@ -132,7 +142,8 @@
     -fx-font-weight: normal;
     -fx-text-fill: -ui-secondary;
 }
-.combo-box .list-view .list-cell:hover {
+.combo-box .list-view .list-cell:hover,
+.combo-box .list-view .list-cell:focused {
     -fx-font-weight: bold;
 }
 /* endregion */
@@ -147,12 +158,14 @@
     -fx-font-weight: bold;
     -fx-text-fill: -ui-secondary;
 }
-.button:hover {
+.button:hover,
+.button:focused {
     -fx-background-color: linear-gradient(to bottom, -ui-secondary-soft, -ui-secondary);
 
     -fx-text-fill: -ui-primary;
 }
-.button:pressed {
+.button:pressed,
+.button:armed {
     -fx-scale-x: 0.95;
     -fx-scale-y: 0.95;
 

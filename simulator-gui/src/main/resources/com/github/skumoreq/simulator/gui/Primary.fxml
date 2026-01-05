@@ -4,9 +4,6 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<?import javafx.scene.image.ImageView?>
-<?import javafx.scene.image.Image?>
-<?import javafx.scene.Group?>
 <BorderPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.github.skumoreq.simulator.gui.PrimaryController"
@@ -49,7 +46,8 @@
       </padding>
 
       <TitledPane fx:id="carSection"
-                  maxWidth="350">
+                  maxWidth="350"
+                  focusTraversable="false">
         <graphic>
           <HBox prefWidth="330" prefHeight="25"
                 alignment="CENTER">
@@ -98,17 +96,26 @@
             <Region HBox.hgrow="ALWAYS"/>
             <Button onAction="#startEngineOnAction"
                     prefWidth="100"
-                    text="▶ Odpal"/>
+                    text="▶ Odpal">
+              <tooltip>
+                <Tooltip text="⌨ Naciśnij klawisz 'R'."/>
+              </tooltip>
+            </Button>
             <Button onAction="#stopEngineOnAction"
                     prefWidth="100"
-                    text="▶ Zgaś"/>
+                    text="▶ Zgaś">
+              <tooltip>
+                <Tooltip text="⌨ Naciśnij klawisz 'F'."/>
+              </tooltip>
+            </Button>
             <Region HBox.hgrow="ALWAYS"/>
           </HBox>
         </GridPane>
       </TitledPane>
 
       <TitledPane fx:id="clutchSection"
-                  maxWidth="350">
+                  maxWidth="350"
+                  focusTraversable="false">
         <graphic>
           <HBox prefWidth="330" prefHeight="25"
                 alignment="CENTER">
@@ -149,19 +156,28 @@
                 spacing="5"
                 GridPane.rowIndex="3" GridPane.columnIndex="0" GridPane.columnSpan="2">
             <Region HBox.hgrow="ALWAYS"/>
-            <Button onAction="#releaseClutchOnAction"
-                    prefWidth="100"
-                    text="▶ Zwolnij"/>
             <Button onAction="#pressClutchOnAction"
                     prefWidth="100"
-                    text="▶ Naciśnij"/>
+                    text="▶ Naciśnij">
+              <tooltip>
+                <Tooltip text="⌨ Przytrzymaj spację."/>
+              </tooltip>
+            </Button>
+            <Button onAction="#releaseClutchOnAction"
+                    prefWidth="100"
+                    text="▶ Zwolnij">
+              <tooltip>
+                <Tooltip text="⌨ Puść spację."/>
+              </tooltip>
+            </Button>
             <Region HBox.hgrow="ALWAYS"/>
           </HBox>
         </GridPane>
       </TitledPane>
 
       <TitledPane fx:id="gearboxSection"
-                  maxWidth="350">
+                  maxWidth="350"
+                  focusTraversable="false">
         <graphic>
           <HBox prefWidth="330" prefHeight="25"
                 alignment="CENTER">
@@ -204,17 +220,26 @@
             <Region HBox.hgrow="ALWAYS"/>
             <Button onAction="#shiftUpOnAction"
                     prefWidth="125"
-                    text="▶ Zwiększ bieg"/>
+                    text="▶ Zwiększ bieg">
+              <tooltip>
+                <Tooltip text="⌨ Naciśnij klawisz 'E'."/>
+              </tooltip>
+            </Button>
             <Button onAction="#shiftDownOnAction"
                     prefWidth="125"
-                    text="▶ Zmniejsz bieg"/>
+                    text="▶ Zmniejsz bieg">
+              <tooltip>
+                <Tooltip text="⌨ Naciśnij klawisz 'Q'."/>
+              </tooltip>
+            </Button>
             <Region HBox.hgrow="ALWAYS"/>
           </HBox>
         </GridPane>
       </TitledPane>
 
       <TitledPane fx:id="engineSection"
-                  maxWidth="350">
+                  maxWidth="350"
+                  focusTraversable="false">
         <graphic>
           <HBox prefWidth="330" prefHeight="25"
                 alignment="CENTER">
@@ -257,10 +282,18 @@
             <Region HBox.hgrow="ALWAYS"/>
             <Button onAction="#revUpOnAction"
                     prefWidth="125"
-                    text="▶ Dodaj gazu"/>
+                    text="▶ Dodaj gazu">
+              <tooltip>
+                <Tooltip text="🖱 Przewiń kółkiem myszy w górę."/>
+              </tooltip>
+            </Button>
             <Button onAction="#revDownOnAction"
                     prefWidth="125"
-                    text="▶ Ujmij gazu"/>
+                    text="▶ Ujmij gazu">
+              <tooltip>
+                <Tooltip text="🖱 Przewiń kółkiem myszy w dół."/>
+              </tooltip>
+            </Button>
             <Region HBox.hgrow="ALWAYS"/>
           </HBox>
         </GridPane>
@@ -274,19 +307,25 @@
         <Insets topRightBottomLeft="20"/>
       </padding>
 
-      <Pane fx:id="drivingArea"
-            onMouseMoved="#drivingAreaOnMouseMoved"
-            onMouseExited="#drivingAreaOnMouseExited"
-            onMouseClicked="#drivingAreaOnMouseClicked"
-            styleClass="driving-area">
-        <Group fx:id="carIconNode">
-          <ImageView fx:id="carIcon" fitWidth="75" preserveRatio="true">
-            <Image url="@images/car.png"/>
-          </ImageView>
-        </Group>
-        <Label fx:id="cursorPointDisplay"/>
-      </Pane>
+      <StackPane styleClass="driving-area-border">
+        <padding>
+          <Insets top="16" right="8" bottom="8" left="8"/>
+        </padding>
+
+        <Pane fx:id="drivingArea"
+              onKeyPressed="#drivingAreaOnKeyPressed"
+              onKeyReleased="#drivingAreaOnKeyReleased"
+              onScroll="#drivingAreaOnScroll"
+              onMouseEntered="#drivingAreaOnMouseEntered"
+              onMouseExited="#drivingAreaOnMouseExited"
+              onMouseMoved="#drivingAreaOnMouseMoved"
+              styleClass="driving-area"/>
+      </StackPane>
+
+      <Label fx:id="cursorPointDisplay"
+             StackPane.alignment="TOP_CENTER"/>
     </StackPane>
+
   </center>
 
 </BorderPane>

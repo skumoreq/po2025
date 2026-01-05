@@ -3,14 +3,13 @@ package com.github.skumoreq.simulator.gui;
 import com.github.skumoreq.simulator.Car;
 import com.github.skumoreq.simulator.Clutch;
 import com.github.skumoreq.simulator.Engine;
-import com.github.skumoreq.simulator.Gearbox;
+import com.github.skumoreq.simulator.Transmission;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -24,7 +23,7 @@ public class FormController {
     private List<String> usedPlateNumbers; // received from PrimaryController
 
     public void setUsedPlateNumbers(List<String> usedPlateNumbers) {
-        this.usedPlateNumbers = new ArrayList<>(usedPlateNumbers);
+        this.usedPlateNumbers = usedPlateNumbers;
     }
 
     private Car carBeingCreated; // sent to PrimaryController
@@ -112,10 +111,10 @@ public class FormController {
         show(confirm);
 
         carBeingCreated = new Car(
-                GEARBOXES[getSelectedIndex(gearboxSelection)],
-                ENGINES[getSelectedIndex(engineSelection)],
                 getTrimmedText(carPlateNumber),
-                getTrimmedText(carModelName)
+                getTrimmedText(carModelName),
+                TRANSMISSIONS.get(getSelectedIndex(gearboxSelection)),
+                ENGINES.get(getSelectedIndex(engineSelection))
         );
 
         carTotalWeight.setText(carBeingCreated.getTotalWeightDisplay());
@@ -139,7 +138,7 @@ public class FormController {
     }
 
     private void populateClutchSection() {
-        Clutch clutch = CLUTCHES[getSelectedIndex(clutchSelection)];
+        Clutch clutch = CLUTCHES.get(getSelectedIndex(clutchSelection));
 
         clutchWeight.setText(clutch.getWeightDisplay());
         clutchPrice.setText(clutch.getPriceDisplay());
@@ -153,11 +152,11 @@ public class FormController {
     private void populateGearboxSection() {
         select(clutchSelection, getSelectedIndex(gearboxSelection));
 
-        Gearbox gearbox = GEARBOXES[getSelectedIndex(gearboxSelection)];
+        Transmission transmission = TRANSMISSIONS.get(getSelectedIndex(gearboxSelection));
 
-        gearboxWeight.setText(gearbox.getWeightDisplay());
-        gearboxPrice.setText(gearbox.getPriceDisplay());
-        gearboxGearRatios.setText(gearbox.getGearRatiosDisplay());
+        gearboxWeight.setText(transmission.getWeightDisplay());
+        gearboxPrice.setText(transmission.getPriceDisplay());
+        gearboxGearRatios.setText(transmission.getGearRatiosDisplay());
         expand(gearboxSection);
     }
     private void clearGearboxSection() {
@@ -168,7 +167,7 @@ public class FormController {
     }
 
     private void populateEngineSection() {
-        Engine engine = ENGINES[getSelectedIndex(engineSelection)];
+        Engine engine = ENGINES.get(getSelectedIndex(engineSelection));
 
         engineWeight.setText(engine.getWeightDisplay());
         enginePrice.setText(engine.getPriceDisplay());
@@ -220,9 +219,9 @@ public class FormController {
     private void initialize() {
         collapse(carSection, clutchSection, gearboxSection, engineSection);
 
-        for (Clutch clutch : CLUTCHES) clutchSelection.getItems().add(clutch.getName());
-        for (Gearbox gearbox : GEARBOXES) gearboxSelection.getItems().add(gearbox.getName());
-        for (Engine engine : ENGINES) engineSelection.getItems().add(engine.getName());
+        for (Clutch clutch : CLUTCHES) clutchSelection.getItems().add(clutch.getNameDisplay());
+        for (Transmission transmission : TRANSMISSIONS) gearboxSelection.getItems().add(transmission.getNameDisplay());
+        for (Engine engine : ENGINES) engineSelection.getItems().add(engine.getNameDisplay());
 
         addCar.setDisable(true);
         hide(confirm);
@@ -279,7 +278,7 @@ public class FormController {
 
         clear(carPlateNumber, carModelName);
 
-        clearSelection(gearboxSelection); // will also clear clutch selection
+        clearSelection(gearboxSelection); // will also removeAllObservers clutch selection
         clearSelection(engineSelection);
     }
     // endregion

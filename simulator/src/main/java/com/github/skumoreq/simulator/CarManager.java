@@ -1,102 +1,181 @@
 package com.github.skumoreq.simulator;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 
 /**
- * Manages the collection of cars and provides quick access to a selected car.
+ * Central manager for the car simulation system.
  * <p>
- * The cars are stored in an {@link javafx.collections.ObservableList}, so GUI
- * elements like combo boxes can automatically update when cars are added or
- * removed.
- * </p>
- * <p>
- * This class also holds preconfigured clutch, gearbox, and engine components
- * as public constants for easy car creation.
- * </p>
+ * This class serves two primary purposes:
+ * <ul>
+ * <li><b>Static Data Provider:</b> Loads and exposes pre-defined car component
+ * templates (engines, transmissions, clutches) from JSON resources.</li>
+ * <li><b>Active Registry:</b> Maintains the collection of active car instances,
+ * managing their lifecycle (starting threads) and cleanup (interruption/observer
+ * removal) and tracks the currently selected car for synchronized UI updates.</li>
+ * </ul>
  */
 public class CarManager {
 
-    // region > Constants
+    // region ⮞ Static Data Initialization
 
-    public static final Clutch[] CLUTCHES = {
-            new Clutch("Jednotarczowe suche", 8.9, 1400.0),
-            new Clutch("Z kołem dwumasowym", 12.5, 2800.0),
-            new Clutch("Ceramiczne wielotarczowe", 6.8, 4500.0)
-    };
-    public static final Gearbox[] GEARBOXES = {
-            new Gearbox("Standardowa", 35.0, 3200.0,
-                    CLUTCHES[0],
-                    new double[]{3.91, 2.14, 1.36, 1.03, 0.84}),
-            new Gearbox("Z reduktorem drgań", 39.0, 5200.0,
-                    CLUTCHES[1],
-                    new double[]{3.65, 2.05, 1.35, 1.02, 0.81}),
-            new Gearbox("Sportowa sekwencyjna", 31.0, 7500.0,
-                    CLUTCHES[2],
-                    new double[]{3.25, 2.10, 1.45, 1.12, 0.92})
-    };
-    public static final Engine[] ENGINES = {
-            new Engine("Benzynowy 1.0", 85.0, 8000.0, 6500.0),
-            new Engine("Benzynowy 1.6 turbo", 120.0, 15000.0, 7000.0),
-            new Engine("Benzynowy 2.0 turbo", 140.0, 22000.0, 7500.0)
-    };
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+
+    private static final String COMPONENTS_DATA_FILENAME = "components.json";
+    private static final JsonNode COMPONENTS_DATA_ROOT;
+
+    static {
+        String path = "data/" + COMPONENTS_DATA_FILENAME;
+
+        try (InputStream inputStream = CarManager.class.getResourceAsStream(path)) {
+            if (inputStream == null)
+                throw new RuntimeException("Resource file not found: " + path);
+
+            COMPONENTS_DATA_ROOT = MAPPER.readTree(inputStream);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to initialize CarManager data.", e);
+        }
+    }
+
+    private static <T extends CarComponent> List<T> loadComponents(
+            String componentName,
+            Function<JsonNode, T> mapperFunction
+    ) {
+        try {
+            List<T> loadedComponents = new ArrayList<>();
+
+            JsonNode componentsData = COMPONENTS_DATA_ROOT.get(componentName);
+
+            if (componentsData == null || !componentsData.isArray())
+                throw new RuntimeException("Required JSON field is missing or is not an array.");
+
+            for (JsonNode componentData : componentsData)
+                loadedComponents.add(mapperFunction.apply(componentData));
+
+            if (loadedComponents.isEmpty())
+                throw new RuntimeException("The list contains no entries.");
+
+            return Collections.unmodifiableList(loadedComponents);
+        } catch (Exception exception) {
+            throw new RuntimeException("Failed to load " + componentName + " component data.", exception);
+        }
+    }
+
+    public static final @NotNull List<Clutch> CLUTCHES = loadComponents(
+            "clutch", node -> new Clutch(
+                    node.get("name").asText(),
+                    node.get("weight").asDouble(),
+                    node.get("price").asDouble()
+            )
+    );
+
+    public static final @NotNull List<Engine> ENGINES = loadComponents(
+            "engine", node -> new Engine(
+                    node.get("name").asText(),
+                    node.get("weight").asDouble(),
+                    node.get("price").asDouble(),
+                    node.get("maxRpm").asDouble()
+            )
+    );
+
+    public static final @NotNull List<Transmission> TRANSMISSIONS = loadComponents(
+            "transmission", node -> new Transmission(
+                    node.get("name").asText(),
+                    node.get("weight").asDouble(),
+                    node.get("price").asDouble(),
+                    CLUTCHES.get(node.get("clutch").asInt()),
+                    MAPPER.convertValue(node.get("ratios"), double[].class)
+            )
+    );
     // endregion
 
-    // region > Instance Fields
+    // region ⮞ Instance Fields
 
-    private final ObservableList<Car> cars;
+    private final @NotNull ObservableList<Car> cars = FXCollections.observableArrayList();
+    private final @NotNull ObservableList<String> usedPlateNumbers = FXCollections.observableArrayList();
 
-    private Car selectedCar;
+    private volatile @Nullable Car selected = null;
     // endregion
 
-    // region > Initialization
+    // region ⮞ Initialization
 
     public CarManager() {
-        cars = FXCollections.observableArrayList();
-        selectedCar = null;
+        cars.addListener((ListChangeListener<Car>) change -> {
+            while (change.next()) {
+                if (change.wasAdded()) {
+                    for (Car addedCar : change.getAddedSubList()) {
+                        usedPlateNumbers.add(addedCar.getPlateNumber());
+                    }
+                }
+                if (change.wasRemoved()) {
+                    for (Car removedCar : change.getRemoved()) {
+                        usedPlateNumbers.remove(removedCar.getPlateNumber());
+
+                        // CRITICAL: Stop the simulation thread and clear references
+                        // to prevent memory leaks and background processing of removed cars.
+                        removedCar.interrupt();
+                        removedCar.removeAllObservers();
+
+                        if (selected == removedCar) selected = null;
+                    }
+                }
+            }
+        });
     }
     // endregion
 
-    // region > Accessors
+    // region ⮞ Getters
 
-    public ObservableList<Car> getCars() {
-        return cars;
+    public @Nullable Car selected() {
+        return selected;
     }
-    public Car getSelectedCar() {
-        return selectedCar;
+
+    public @NotNull ObservableList<String> usedPlateNumbers() {
+        return usedPlateNumbers;
+    }
+
+    public @NotNull List<String> getUsedPlateNumbers() {
+        return List.copyOf(usedPlateNumbers);
     }
     // endregion
 
-    // region > Query Methods
+    // region ⮞ Query Methods
 
-    public Car getCarByPlateNumber(String plateNumber) {
-        for (Car car: cars) if (car.getPlateNumber().equals(plateNumber)) return car;
+    private @Nullable Car findByPlateNumber(@NotNull String plateNumber) {
+        for (Car car : cars) {
+            if (car.getPlateNumber().equals(plateNumber)) return car;
+        }
+
         return null;
     }
-    public List<String> getAllPlateNumbers() {
-        List<String> allPlateNumbers = new ArrayList<>();
-        for (Car car : cars) allPlateNumbers.add(car.getPlateNumber());
-        return allPlateNumbers;
+
+    public void selectByPlateNumber(@NotNull String plateNumber) {
+        selected = findByPlateNumber(plateNumber);
     }
 
-    public void setSelectedCarByPlateNumber(String plateNumber) {
-        selectedCar = getCarByPlateNumber(plateNumber);
+    public void addEntry(@NotNull Car car) {
+        if (!usedPlateNumbers.contains(car.getPlateNumber())) {
+            cars.add(car);
+
+            // Start the simulation thread after successful registration.
+            car.start();
+        }
     }
 
-    public void addCar(Car car) {
-        if (car == null || cars.contains(car)) return;
-        cars.add(car);
-    }
-    public void removeSelectedCar() {
-        if (selectedCar == null) return;
-
-        selectedCar.interrupt(); // stop the car's background thread first
-
-        cars.remove(selectedCar);
-        selectedCar = null;
+    public void removeSelected() {
+        cars.remove(selected);
     }
     // endregion
 }

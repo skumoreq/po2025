@@ -1,285 +1,404 @@
 package com.github.skumoreq.simulator;
 
-import com.github.skumoreq.simulator.exception.CarException;
 import com.github.skumoreq.simulator.exception.ClutchEngagedException;
 import com.github.skumoreq.simulator.exception.EngineStalledException;
-import com.github.skumoreq.simulator.exception.GearboxNotInNeutralException;
+import com.github.skumoreq.simulator.exception.TorqueTransferActiveException;
+import javafx.application.Platform;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Represents a car with a clutch, a gearbox, and an engine.
+ * Core mechanical logic and simulation engine for a car entity.
  * <p>
- * This class provides the following functionality:
- * </p>
+ * This class acts as a central controller for car components ({@link Engine},
+ * {@link Transmission}, {@link Clutch}) and manages the vehicle's state in a
+ * multithreaded environment.
+ * <p>
+ * The implementation focuses on three primary systems:
  * <ul>
- *   <li>Runs driving simulation in a separate thread.</li>
- *   <li>Notifies registered listeners of state changes via the observer pattern.</li>
- *   <li>Tracks position, destination, engine state, and speed.</li>
- *   <li>Provides control methods for its components, which may throw appropriate
- *   {@link CarException} subclasses.</li>
+ * <li><b>Simulation Engine:</b> A dedicated background thread handles real-time
+ * movement calculations using a wait/notify mechanism to minimize CPU usage
+ * when the car is idle.</li>
+ * <li><b>Thread Safety:</b> Implements a strict synchronization policy. As a
+ * gateway to internal components, it ensures that all state changes are atomic
+ * and visible across threads.</li>
+ * <li><b>State Observation:</b> Implements the Observer pattern to notify
+ * listeners about property changes (e.g., speed, RPM). Notifications are
+ * dispatched asynchronously on the JavaFX Application Thread.</li>
  * </ul>
  *
- * @see Clutch
- * @see Gearbox
- * @see Engine
+ * @see CarComponent
+ * @see CarObserver
+ *
+ * @version 1.0
+ * @author skumoreq
  */
+
 public class Car extends Thread {
 
-    // region > Thread Implementation
+    // region ⮞ Thread Execution
 
-    private static final int THREAD_SLEEP = 50;
+    public static final long THREAD_SLEEP = 20L;
+
+    // Start the thread paused.
+    private volatile boolean paused = true;
+
+    public synchronized void pause() {
+        paused = true;
+    }
+
+    public synchronized void resume() {
+        paused = false;
+        notifyAll();
+    }
 
     @Override
     public void run() {
-        while (true) {
+        while (!Thread.currentThread().isInterrupted()) {
             synchronized (this) {
-                driveToDestination();
+                while (paused) {
+                    try {
+                        wait();
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        return;
+                    }
+                }
             }
-            try { //noinspection BusyWait
+
+            updateAngle();
+            driveToDestination();
+
+            try {
+                //noinspection BusyWait
                 Thread.sleep(THREAD_SLEEP);
-            }
-            catch (InterruptedException e) {
-                break; // terminate thread on interrupt
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
             }
         }
     }
     // endregion
 
-    // region > Observer Pattern
+    // region ⮞ Observer Logic
 
-    private final List<Listener> listeners = new ArrayList<>();
+    private final @NotNull List<CarObserver> observers = new ArrayList<>();
 
-    public void addListener(Listener listener) {
-        // Ensures no null objects or duplicate listeners are added.
-        if (listener == null || listeners.contains(listener)) return;
-        listeners.add(listener);
+    public synchronized void addObserver(@NotNull CarObserver observer) {
+        // Ensures no duplicate observers are added.
+        if (!observers.contains(observer))
+            observers.add(observer);
     }
-    public void removeListener(Listener listener) {
-        listeners.remove(listener);
+
+    public synchronized void removeObserver(@NotNull CarObserver observer) {
+        observers.remove(observer);
     }
-    private void notifyListeners() {
-        // Create a copy in case a listener tries to unsubscribe during update().
-        List<Listener> listenersCopy = new ArrayList<>(listeners);
-        for (Listener listener : listenersCopy) listener.update();
+
+    public synchronized void removeAllObservers() {
+        observers.clear();
+    }
+
+    public synchronized void notifyObservers(CarObserver.ChangedProperty @NotNull ... properties) {
+        if (observers.isEmpty() || properties.length == 0) return;
+
+        // Create a snapshot to avoid ConcurrentModificationException and ensure
+        // thread safety during asynchronous notification on the JavaFX thread.
+        List<CarObserver> snapshot = List.copyOf(observers);
+
+        Platform.runLater(() -> {
+            for (CarObserver observer : snapshot) {
+                for (CarObserver.ChangedProperty property : properties) {
+                    observer.onCarUpdate(this, property);
+                }
+            }
+        });
     }
     // endregion
 
-    // region > Constants
+    // region ⮞ Constants
 
-    public static final double WEIGHT_CONSTANT = 1000.0;
-    public static final double PRICE_CONSTANT = 800.0;
-    public static final double PRICE_MULTIPLIER = 1.23;
-    public static final double SPEED_MULTIPLIER = 0.03;
+    private static final String UI_FALLBACK_NAME = "Brak nazwy modelu";
+    private static final String UI_FORMAT_WEIGHT = "%.1f kg";
+    private static final String UI_FORMAT_PRICE = "%.2f zł";
+    private static final String UI_FORMAT_SPEED = "%.0f km/h";
+
+    private static final double WEIGHT_CONSTANT = 1000.0;
+    private static final double PRICE_CONSTANT = 800.0;
+    private static final double PRICE_MULTIPLIER = 1.23;
+
+    private static final double SPEED_MULTIPLIER = 0.03;
+    private static final double UNIT_SCALE = 10.0;
     // endregion
 
-    // region > Instance Fields
+    // region ⮞ Instance Fields
 
-    private final Gearbox gearbox;
-    private final Engine engine;
-    private final String plateNumber;
-    private final String modelName;
-    private final Point position;
-    private final Point destination;
+    private final @NotNull String plateNumber;
+    private final @NotNull String modelName;
 
-    private boolean isEngineOn;
-    private double speed;
+    private final @NotNull Clutch clutch;
+    private final @NotNull Transmission transmission;
+    private final @NotNull Engine engine;
+
+    private final @NotNull Point position = new Point();
+    private final @NotNull Point destination = new Point();
+
+    private double speed = 0.0;
+    private double angle = 0.0;
     // endregion
 
-    // region > Initialization
+    // region ⮞ Initialization
 
-    public Car(Gearbox gearbox, Engine engine, String plateNumber, String modelName) {
-        this.gearbox = new Gearbox(gearbox);
-        this.engine = new Engine(engine);
+    public Car(
+            @NotNull String plateNumber, @NotNull String modelName,
+            @NotNull Transmission transmission, @NotNull Engine engine
+    ) {
         this.plateNumber = plateNumber;
         this.modelName = modelName;
 
-        position = new Point(100, 100);
-        destination = new Point(position);
+        this.transmission = new Transmission(transmission);
+        this.engine = new Engine(engine);
 
-        isEngineOn = false;
-        speed = 0.0;
-
-        start(); // starts the thread after object is initialized
+        // Assign the clutch directly from the transmission to ensure
+        // mechanical consistency.
+        clutch = this.transmission.clutch();
     }
     // endregion
 
-    // region > Getters
+    // region ⮞ Getters & Setters
 
-    public Gearbox getGearbox() {
-        return gearbox;
-    }
-    public Engine getEngine() {
-        return engine;
-    }
-    public String getPlateNumber() {
+    public @NotNull String getPlateNumber() {
         return plateNumber;
     }
-    public String getModelName() {
-        return modelName;
+
+    public @NotNull CarComponent getClutch() {
+        return clutch;
     }
-    public Point getPosition() {
-        return position;
+
+    public @NotNull CarComponent getGearbox() {
+        return transmission;
     }
-    public Point getDestination() {
-        return destination;
+
+    public @NotNull CarComponent getEngine() {
+        return engine;
     }
-    public boolean isEngineOn() {
-        return isEngineOn;
+
+    public synchronized double getPositionX() {
+        return position.getX();
     }
-    public double getSpeed() {
+
+    public synchronized double getPositionY() {
+        return position.getY();
+    }
+
+    public synchronized double getSpeed() {
         return speed;
     }
+
+    public synchronized double getAngle() {
+        return angle;
+    }
+
+    public synchronized void setPosition(double x, double y) {
+        position.set(x, y);
+    }
+
+    public synchronized void setDestination(double x, double y) {
+        destination.set(x, y);
+    }
     // endregion
 
-    // region > Calculations
+    // region ⮞ Calculations
 
     public double calculateTotalWeight() {
-        double baseWeight = gearbox.getClutch().getWeight() + gearbox.getWeight() + engine.getWeight();
+        double baseWeight = clutch.getWeight() + transmission.getWeight() + engine.getWeight();
         return baseWeight + WEIGHT_CONSTANT;
     }
+
     public double calculateTotalPrice() {
-        double basePrice = gearbox.getClutch().getPrice() + gearbox.getPrice() + engine.getPrice();
+        double basePrice = clutch.getPrice() + transmission.getPrice() + engine.getPrice();
         return (basePrice + PRICE_CONSTANT) * PRICE_MULTIPLIER;
     }
+
     public double calculateTopSpeed() {
-        return calculateSpeed(engine.getMaxRpm(), gearbox.getGearRatios()[Gearbox.NUM_GEARS - 1]);
+        return calculateSpeed(engine.getMaxRpm(), transmission.getGearRatio(transmission.getGearCount()));
     }
     // endregion
 
-    // region > Display Methods
+    // region ⮞ Helper Methods
 
-    public String getTotalWeightDisplay() {
-        return String.format("%.1f kg", calculateTotalWeight());
-    }
-    public String getTotalPriceDisplay() {
-        return String.format("%.2f zł", calculateTotalPrice());
-    }
-    public String getTopSpeedDisplay() {
-        return String.format("%.0f km/h", calculateTopSpeed());
-    }
-    public String getEngineStatusDisplay() {
-        return isEngineOn ? "Włączony" : "Wyłączony";
-    }
-    public String getSpeedDisplay() {
-        return String.format("%.0f km/h", speed);
-    }
-    // endregion
-
-    // region > Helper Methods
-
-    /** @return speed from given RPM and gear ratio */
-    private double calculateSpeed(double rpm, double gearRatio) {
-        return gearRatio > 0.0 ? rpm / gearRatio * SPEED_MULTIPLIER : 0.0;
-    }
-
-    /** Updates the current speed using current RPM and gear ratio. */
-    private void updateSpeed() {
-        speed = calculateSpeed(engine.getRpm(), gearbox.getGearRatio());
+    private static double calculateSpeed(double rpm, double ratio) {
+        return ratio > 0.0 ? rpm / ratio * SPEED_MULTIPLIER : 0.0;
     }
 
     /**
-     * Stops the engine if RPM drops below idle.
-     * Should be called anytime RPM could decrease.
-     *
-     * @throws EngineStalledException if the engine stalls
+     * @implNote This helper does not need {@code synchronized} as long as it
+     * is called exclusively from other synchronized methods of this class.
      */
-    private void handlePossibleEngineStall() {
-        if (engine.getRpm() < Engine.RPM_IDLE) {
-            stopEngine();
-            throw new EngineStalledException();
-        }
+    private boolean updateSpeed() {
+        if (!transmission.isTorqueTransferred()) return false;
+
+        speed = calculateSpeed(engine.getRpm(), transmission.getEffectiveRatio());
+
+        return true;
     }
     // endregion
 
-    // region > Control Methods
+    // region ⮞ Control Methods
 
-    public void startEngine() {
-        if (isEngineOn) return;
-        if (!gearbox.isInNeutral()) throw new GearboxNotInNeutralException();
+    public synchronized void startEngine() throws TorqueTransferActiveException {
+        if (!engine.start(transmission.isTorqueTransferred())) return;
 
-        isEngineOn = true;
-        engine.start();
-        gearbox.clearPreviousGear(); // required for correct RPM adjustment after first gear change
+        transmission.clearPreviousGear();
 
-        notifyListeners();
-    }
-    public void stopEngine() {
-        if (!isEngineOn) return;
-
-        isEngineOn = false;
-        engine.stop();
-        updateSpeed();
-
-        notifyListeners();
+        notifyObservers(CarObserver.ChangedProperty.ENGINE_STATE,
+                        CarObserver.ChangedProperty.RPM);
     }
 
-    public void pressClutch() {
-        if (!gearbox.getClutch().isEngaged()) return;
+    public synchronized void stopEngine() {
+        if (!engine.stop()) return;
 
-        gearbox.getClutch().disengage();
+        speed = 0.0;
 
-        gearbox.updatePreviousGear();
-        gearbox.updateGearRatio();
-
-        notifyListeners();
+        notifyObservers(CarObserver.ChangedProperty.ENGINE_STATE,
+                        CarObserver.ChangedProperty.RPM,
+                        CarObserver.ChangedProperty.SPEED);
     }
-    public void releaseClutch() {
-        if (gearbox.getClutch().isEngaged()) return;
 
-        gearbox.getClutch().engage();
+    public synchronized void pressClutch() {
+        if (!clutch.disengage()) return;
 
-        gearbox.updateGearRatio();
+        transmission.updatePreviousGear();
 
-        if (isEngineOn && !gearbox.isInNeutral()) {
-            engine.adjustRpmAfterGearChange(gearbox.getPreviousGear(), gearbox.getGear());
-            handlePossibleEngineStall();
-            updateSpeed();
+        notifyObservers(CarObserver.ChangedProperty.CLUTCH_STATE);
+    }
+
+    public synchronized void releaseClutch() throws EngineStalledException {
+        if (!clutch.engage()) return;
+
+        try {
+            if (engine.adjustRpmAfterGearChange(transmission.getGearShiftDelta())) {
+                if (updateSpeed()) {
+                    notifyObservers(CarObserver.ChangedProperty.CLUTCH_STATE,
+                                    CarObserver.ChangedProperty.RPM,
+                                    CarObserver.ChangedProperty.SPEED);
+                } else {
+                    notifyObservers(CarObserver.ChangedProperty.CLUTCH_STATE,
+                                    CarObserver.ChangedProperty.RPM);
+                }
+            } else {
+                notifyObservers(CarObserver.ChangedProperty.CLUTCH_STATE);
+            }
+        } catch (EngineStalledException e) {
+            speed = 0.0;
+
+            notifyObservers(CarObserver.ChangedProperty.CLUTCH_STATE,
+                            CarObserver.ChangedProperty.ENGINE_STATE,
+                            CarObserver.ChangedProperty.RPM,
+                            CarObserver.ChangedProperty.SPEED);
+
+            throw e;
         }
-
-        notifyListeners();
     }
 
-    public void shiftUp() {
-        if (gearbox.getClutch().isEngaged()) throw new ClutchEngagedException();
+    public synchronized void shiftUp() throws ClutchEngagedException {
+        if (!transmission.shiftUp()) return;
 
-        gearbox.shiftUp();
-
-        notifyListeners();
-    }
-    public void shiftDown() {
-        if (gearbox.getClutch().isEngaged()) throw new ClutchEngagedException();
-
-        gearbox.shiftDown();
-
-        notifyListeners();
+        notifyObservers(CarObserver.ChangedProperty.GEAR);
     }
 
-    public void revUp() {
-        if (!isEngineOn) return;
+    public synchronized void shiftDown() throws ClutchEngagedException {
+        if (!transmission.shiftDown()) return;
 
-        engine.increaseRpm();
-        if (!gearbox.isInNeutral()) updateSpeed();
-
-        notifyListeners();
-    }
-    public void revDown() {
-        if (!isEngineOn) return;
-
-        engine.decreaseRpm();
-        handlePossibleEngineStall();
-        if (!gearbox.isInNeutral()) updateSpeed();
-
-        notifyListeners();
+        notifyObservers(CarObserver.ChangedProperty.GEAR);
     }
 
-    public void driveToDestination() {
-        if (!isEngineOn) return;
+    public synchronized void revUp() {
+        if (!engine.increaseRpm()) return;
 
-        position.moveTo(destination, speed, THREAD_SLEEP, 5.0);
+        if (updateSpeed()) {
+            notifyObservers(CarObserver.ChangedProperty.RPM,
+                            CarObserver.ChangedProperty.SPEED);
+        } else {
+            notifyObservers(CarObserver.ChangedProperty.RPM);
+        }
+    }
 
-        notifyListeners();
+    public synchronized void revDown() throws EngineStalledException {
+        try {
+            if (!engine.decreaseRpm()) return;
+
+            if (updateSpeed()) {
+                notifyObservers(CarObserver.ChangedProperty.RPM,
+                                CarObserver.ChangedProperty.SPEED);
+            } else {
+                notifyObservers(CarObserver.ChangedProperty.RPM);
+            }
+        } catch (EngineStalledException e) {
+            speed = 0.0;
+
+            notifyObservers(CarObserver.ChangedProperty.ENGINE_STATE,
+                            CarObserver.ChangedProperty.RPM,
+                            CarObserver.ChangedProperty.SPEED);
+
+            throw e;
+        }
+    }
+
+    public synchronized void updateAngle() {
+        double angle = position.angleTo(destination);
+
+        if (Double.isNaN(angle)) return;
+
+        this.angle = angle;
+
+        notifyObservers(CarObserver.ChangedProperty.ANGLE);
+    }
+
+    public synchronized void driveToDestination() {
+        if (!position.moveTowards(destination, speed, THREAD_SLEEP, UNIT_SCALE)) return;
+
+        notifyObservers(CarObserver.ChangedProperty.POSITION);
+    }
+    // endregion
+
+    // region ⮞ Display Methods
+
+    public @NotNull String getModelNameDisplay() {
+        return modelName.isBlank() ? UI_FALLBACK_NAME : modelName.trim();
+    }
+
+    public @NotNull String getTotalWeightDisplay() {
+        return String.format(UI_FORMAT_WEIGHT, calculateTotalWeight());
+    }
+
+    public @NotNull String getTotalPriceDisplay() {
+        return String.format(UI_FORMAT_PRICE, calculateTotalPrice());
+    }
+
+    public @NotNull String getTopSpeedDisplay() {
+        return String.format(UI_FORMAT_SPEED, calculateTopSpeed());
+    }
+
+    public synchronized @NotNull String getSpeedDisplay() {
+        return String.format(UI_FORMAT_SPEED, speed);
+    }
+
+    public synchronized @NotNull String getClutchStateDisplay() {
+        return clutch.getClutchStateDisplay();
+    }
+
+    public synchronized @NotNull String getGearDisplay() {
+        return transmission.getGearDisplay();
+    }
+
+    public synchronized @NotNull String getEngineStateDisplay() {
+        return engine.getEngineStateDisplay();
+    }
+
+    public synchronized @NotNull String getRpmDisplay() {
+        return engine.getRpmDisplay();
     }
     // endregion
 }

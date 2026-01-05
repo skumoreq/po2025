@@ -3,53 +3,83 @@ package com.github.skumoreq.simulator;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Represents a clutch component.
+ * Represents a clutch car component.
  * <p>
- * Can be engaged or disengaged, affecting gearbox and engine operation.
- * </p>
+ * Manages the connection between the engine and the transmission, controlling
+ * the torque transfer between them.
+ *
+ * @see Transmission
+ * @see Engine
  */
-public class Clutch extends Component{
+public class Clutch extends CarComponent {
 
-    // region > Instance Fields
+    // region ⮞ Constants
 
-    private boolean isEngaged;
+    private static final String UI_STATE_ENGAGED = "Załączone";
+    private static final String UI_STATE_DISENGAGED = "Rozłączone";
     // endregion
 
-    // region > Initialization
+    // region ⮞ Instance Fields
 
-    public Clutch(String name, double weight, double price) {
+    private boolean engaged;
+    // endregion
+
+    // region ⮞ Initialization
+
+    public Clutch(@NotNull String name, double weight, double price) {
         super(name, weight, price);
 
-        isEngaged = true;
+        engaged = true;
     }
+
+    /**
+     * Creates a new Clutch based on an existing instance.
+     */
     public Clutch(@NotNull Clutch clutch) {
-        this(clutch.getName(), clutch.getWeight(), clutch.getPrice());
+        this(clutch.name, clutch.weight, clutch.price);
     }
     // endregion
 
-    // region > Getters
+    // region ⮞ Getters
 
+    /**
+     * @return {@code true} if the clutch allows the torque transfer from the
+     * engine to the transmission.
+     */
     public boolean isEngaged() {
-        return isEngaged;
+        return engaged;
     }
     // endregion
 
-    // region > Display Methods
+    // region ⮞ Control Methods
 
-    public String getEngagementStatusDisplay() {
-        return isEngaged ? "Zaciśnięte" : "Rozłączone";
+    /**
+     * Connects the engine to the transmission.
+     */
+    public boolean engage() {
+        if (engaged) return false;
+
+        engaged = true;
+
+        return true;
+    }
+
+    /**
+     * Disconnects the engine from the transmission.
+     */
+    public boolean disengage() {
+        if (!engaged) return false;
+
+        engaged = false;
+
+        return true;
     }
     // endregion
 
-    // region > Control Methods
+    // region ⮞ Display Methods
 
-    /** Engages the clutch, mechanically coupling the engine and gearbox. */
-    public void engage() {
-        isEngaged = true;
-    }
-    /** Disengages the clutch, allowing gear changes. */
-    public void disengage() {
-        isEngaged = false;
+    public @NotNull String getClutchStateDisplay() {
+        return engaged ? UI_STATE_ENGAGED : UI_STATE_DISENGAGED;
     }
     // endregion
 }

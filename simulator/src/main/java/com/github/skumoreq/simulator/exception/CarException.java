@@ -1,17 +1,20 @@
 package com.github.skumoreq.simulator.exception;
 
 import com.github.skumoreq.simulator.Car;
+import org.jetbrains.annotations.NotNull;
 
 /**
- * Base class for all {@link Car}-related exceptions.
+ * Base class for exceptions indicating an invalid car state or mechanical
+ * violation.
  * <p>
- * Thrown when an operation fails due to an invalid car state.
- * </p>
+ * This is a <strong>checked exception</strong>, meaning it must be either
+ * caught or declared in the method signature.
+ *
+ * @see Car
  */
-public abstract class CarException extends RuntimeException {
+public abstract class CarException extends Exception {
 
-    /** @param message developer-oriented message for debugging purposes */
-    public CarException(String message) {
+    public CarException(@NotNull String message) {
         super(message);
     }
 }

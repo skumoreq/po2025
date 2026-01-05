@@ -12,21 +12,22 @@ import java.util.Random;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-/**
- * JUnit 5 tests for {@link Point#moveTo(Point, double, double)}.
- * <p>
- * Verifies correct movement behavior including linear and diagonal motion,
- * early-return conditions, overshoot prevention, and numerical stability
- * across repeated small steps.
- * </p>
- * <p>
- * Most tests assume that 18 km/h == 5 m/s, resulting in a 5 m movement over
- * a 1000 ms interval.
- * </p>
- */
 class PointTest {
 
-    private final Random random = new Random(2026L); // fixed seed for reproducibility
+    // region ⮞ Test Configuration
+
+    // Random initialized with fixed seed for reproducibility.
+    private static final Random TEST_RANDOM = new Random(2026L);
+
+    private static final int TEST_RUNS = 200;
+    private static final double TEST_DELTA = 1.0e-14;
+
+    // Standard presets: Speed 18 km/h (5 m/s) over a 1000ms (1s) time interval
+    // results in exactly 5 units of movement at 1.0 scale.
+    private static final double TEST_SCALE = 1.0;
+    private static final double TEST_SPEED = 18.0;
+    private static final double TEST_INTERVAL = 1000.0;
+    private static final double EXPECTED_STEP = 5.0;
 
     private Point point;
     private Point target;
@@ -37,10 +38,16 @@ class PointTest {
         target = new Point();
     }
 
-    // region > Helper Methods
-
     private double randomInRange(double min, double max) {
-        return min + (max - min) * random.nextDouble();
+        return min + (max - min) * TEST_RANDOM.nextDouble();
+    }
+
+    private void moveTowardsTarget(@NotNull Point point, double speed, double interval) {
+        point.moveTowards(target, speed, interval, TEST_SCALE);
+    }
+
+    private void moveWithPresets(@NotNull Point point) {
+        moveTowardsTarget(point, TEST_SPEED, TEST_INTERVAL);
     }
 
     private void assertPointEquals(double expectedX, double expectedY, double delta) {
@@ -48,135 +55,142 @@ class PointTest {
                 () -> assertEquals(expectedX, point.getX(), delta, "X coordinate mismatch"),
                 () -> assertEquals(expectedY, point.getY(), delta, "Y coordinate mismatch"));
     }
+
     private void assertPointEquals(@NotNull Point expected, double delta) {
         assertPointEquals(expected.getX(), expected.getY(), delta);
     }
     // endregion
 
-    // region > Linear Movement Tests
+    // region ⮞ Axis-Aligned Movement
 
-    @RepeatedTest(500)
-    void moveTo_linearMovementPositiveX() {
+    @RepeatedTest(TEST_RUNS)
+    void moveTowards_positiveXMovement() {
         double pointX = randomInRange(0.0, 1.0);
 
-        target.setX(10.0);
+        target.setX(EXPECTED_STEP + 1.0);
         point.setX(pointX);
 
-        point.moveTo(target, 18.0, 1000.0);
-        assertPointEquals(pointX + 5.0, 0.0, 1.0E-14);
+        moveWithPresets(point);
+        assertPointEquals(pointX + EXPECTED_STEP, 0.0, TEST_DELTA);
     }
-    @RepeatedTest(500)
-    void moveTo_linearMovementNegativeX() {
+
+    @RepeatedTest(TEST_RUNS)
+    void moveTowards_negativeXMovement() {
         double pointX = randomInRange(-1.0, 0.0);
 
-        target.setX(-10.0);
+        target.setX(-EXPECTED_STEP - 1.0);
         point.setX(pointX);
 
-        point.moveTo(target, 18.0, 1000.0);
-        assertPointEquals(pointX - 5.0, 0.0, 1.0E-14);
+        moveWithPresets(point);
+        assertPointEquals(pointX - EXPECTED_STEP, 0.0, TEST_DELTA);
     }
-    @RepeatedTest(500)
-    void moveTo_linearMovementPositiveY() {
+
+    @RepeatedTest(TEST_RUNS)
+    void moveTowards_positiveYMovement() {
         double pointY = randomInRange(0.0, 1.0);
 
-        target.setY(10.0);
+        target.setY(EXPECTED_STEP + 1.0);
         point.setY(pointY);
 
-        point.moveTo(target, 18.0, 1000.0);
-        assertPointEquals(0.0, pointY + 5.0, 1.0E-14);
+        moveWithPresets(point);
+        assertPointEquals(0.0, pointY + EXPECTED_STEP, TEST_DELTA);
     }
-    @RepeatedTest(500)
-    void moveTo_linearMovementNegativeY() {
+
+    @RepeatedTest(TEST_RUNS)
+    void moveTowards_negativeYMovement() {
         double pointY = randomInRange(-1.0, 0.0);
 
-        target.setY(-10.0);
+        target.setY(-EXPECTED_STEP - 1.0);
         point.setY(pointY);
 
-        point.moveTo(target, 18.0, 1000.0);
-        assertPointEquals(0.0, pointY - 5.0, 1.0E-14);
+        moveWithPresets(point);
+        assertPointEquals(0.0, pointY - EXPECTED_STEP, TEST_DELTA);
     }
     // endregion
 
-    // region > Diagonal Movement Tests
+    // region ⮞ Diagonal Movement
 
     @ParameterizedTest
-    @CsvSource({"5.0,5.0","5.0,-5.0","-5.0,-5.0","-5.0,5.0"})
-    void moveTo_diagonalMovement(double targetX, double targetY) {
-        target.setX(targetX);
-        target.setY(targetY);
+    @CsvSource({"1.0, 1.0", "1.0, -1.0", "-1.0, -1.0", "-1.0, 1.0"})
+    void moveTowards_diagonalMovement(double signX, double signY) {
+        target.setX(signX * EXPECTED_STEP);
+        target.setY(signY * EXPECTED_STEP);
 
-        point.moveTo(target, 18.0, 1000.0);
-        assertPointEquals(targetX / Math.sqrt(2.0), targetY / Math.sqrt(2.0), 1.0E-14);
+        moveWithPresets(point);
+
+        // Origin moves towards a diagonal target. The total distance moved must
+        // be 5 units. Therefore, each coordinate moves by: 5 / sqrt(2)
+        assertPointEquals(signX * EXPECTED_STEP / Math.sqrt(2.0), signY * EXPECTED_STEP / Math.sqrt(2.0), TEST_DELTA);
     }
     // endregion
 
-    // region > Early Return Tests
+    // region ⮞ Edge Cases
 
-    @RepeatedTest(500)
-    void moveTo_samePoint_noMovement() {
-        target.setX(randomInRange(-1.0, 1.0));
-        target.setY(randomInRange(-1.0, 1.0));
-        point.setX(target.getX());
-        point.setY(target.getY());
+    @RepeatedTest(TEST_RUNS)
+    void moveTowards_targetOverlap() {
+        target.set(randomInRange(-1.0, 1.0), randomInRange(-1.0, 1.0));
+        point.set(target);
 
-        Point copy = new Point(point);
+        Point point1 = new Point(point);
 
-        point.moveTo(target, 18.0, 1000.0);
-        assertPointEquals(copy, 0.0);
+        moveWithPresets(point);
+        assertPointEquals(point1, 0.0);
     }
-    @RepeatedTest(500)
-    void moveTo_invalidSpeed_noMovement() {
-        double speed = randomInRange(-18.0, 0.0);
 
-        target.setX(10.0);
-        point.setX(randomInRange(-1.0, 1.0));
-        point.setY(randomInRange(-1.0, 1.0));
+    @RepeatedTest(TEST_RUNS)
+    void moveTowards_speedInvalid() {
+        double speed = randomInRange(-TEST_SPEED, 0.0);
 
-        Point copy = new Point(point);
+        target.setX(EXPECTED_STEP);
 
-        point.moveTo(target, speed, 1000.0);
-        assertPointEquals(copy, 0.0);
+        Point point1 = new Point(point);
+
+        moveTowardsTarget(point, speed, TEST_INTERVAL);
+        assertPointEquals(point1, 0.0);
     }
-    @RepeatedTest(500)
-    void moveTo_invalidInterval_noMovement() {
-        double interval = randomInRange(-1000.0, 0.0);
 
-        target.setX(10.0);
-        point.setX(randomInRange(-1.0, 1.0));
-        point.setY(randomInRange(-1.0, 1.0));
+    @RepeatedTest(TEST_RUNS)
+    void moveTowards_intervalInvalid() {
+        double interval = randomInRange(-TEST_INTERVAL, 0.0);
 
-        Point copy = new Point(point);
+        target.setX(EXPECTED_STEP);
 
-        point.moveTo(target, 18.0, interval);
-        assertPointEquals(copy, 0.0);
+        Point point1 = new Point(point);
+
+        moveTowardsTarget(point, TEST_SPEED, interval);
+        assertPointEquals(point1, 0.0);
     }
     // endregion
 
-    // region > Overshoot Prevention Tests
+    // region ⮞ Overshoot Control
 
-    @RepeatedTest(500)
-    void moveTo_overshootPrevention() {
-        target.setX(randomInRange(-1.0, 1.0));
-        target.setY(randomInRange(-1.0, 1.0));
+    @RepeatedTest(TEST_RUNS)
+    void moveTowards_shouldNotOvershootTarget() {
+        target.set(randomInRange(-1.0, 1.0), randomInRange(-1.0, 1.0));
 
-        point.moveTo(target, 18.0, 1000.0);
+        moveWithPresets(point);
         assertPointEquals(target, 0.0);
     }
     // endregion
 
-    // region > Stability Over Many Steps Tests
+    // region ⮞ Numerical Stability
 
     @Test
-    void moveTo_stableOverManySteps() {
-        target.setX(10.0);
-        point.setX(randomInRange(-1.0, 1.0));
-        point.setY(randomInRange(-1.0, 1.0));
+    void moveTowards_stableOverManySteps() {
+        target.setX(EXPECTED_STEP + 1.0);
+        point.set(randomInRange(-1.0, 1.0), randomInRange(-1.0, 1.0));
 
-        Point copy = new Point(point);
-        copy.moveTo(target, 18.0, 1000.0);
+        Point point1 = new Point(point);
 
-        for (int i = 0; i < 1000; i++) point.moveTo(target, 18.0, 1.0);
-        assertPointEquals(copy, 1e-7);
+        moveWithPresets(point1);
+
+        for (int i = 0; i < (int) TEST_INTERVAL; i++) {
+            moveTowardsTarget(point, TEST_SPEED, 1.0);
+        }
+
+        // Multiple small additions in the loop can lead to floating-point drift.
+        // A delta of 1e-7 ensures the test remains stable while maintaining high precision.
+        assertPointEquals(point1, 1e-7);
     }
     // endregion
 }
