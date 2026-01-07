@@ -10,9 +10,9 @@
   <version>1.0</version>
 
   <properties>
-    <maven.compiler.source>25</maven.compiler.source>
-    <maven.compiler.target>25</maven.compiler.target>
+    <maven.compiler.release>25</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <javafx.version>25.0.1</javafx.version>
   </properties>
 
   <dependencies>
@@ -27,52 +27,94 @@
       <groupId>com.github.skumoreq</groupId>
       <artifactId>simulator</artifactId>
       <version>1.0</version>
-      <scope>compile</scope>
     </dependency>
 
     <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-databind</artifactId>
-      <version>2.15.2</version>
+      <groupId>org.openjfx</groupId>
+      <artifactId>javafx-base</artifactId>
+      <version>${javafx.version}</version>
     </dependency>
-
     <dependency>
       <groupId>org.openjfx</groupId>
       <artifactId>javafx-controls</artifactId>
-      <version>21.0.6</version>
+      <version>${javafx.version}</version>
     </dependency>
-
     <dependency>
       <groupId>org.openjfx</groupId>
       <artifactId>javafx-fxml</artifactId>
-      <version>21.0.6</version>
+      <version>${javafx.version}</version>
     </dependency>
-
     <dependency>
       <groupId>org.openjfx</groupId>
       <artifactId>javafx-graphics</artifactId>
-      <version>21.0.6</version>
+      <version>${javafx.version}</version>
     </dependency>
 
+    <dependency>
+      <groupId>tools.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>3.0.3</version>
+    </dependency>
   </dependencies>
 
   <build>
     <plugins>
       <plugin>
-        <groupId>org.openjfx</groupId>
-        <artifactId>javafx-maven-plugin</artifactId>
-        <version>0.0.8</version>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.14.1</version>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>3.2.0</version>
         <executions>
           <execution>
-            <id>default-cli</id>
+            <id>pre-clean-dist</id>
+            <phase>pre-clean</phase>
+            <goals>
+              <goal>run</goal>
+            </goals>
             <configuration>
-              <mainClass>com.github.skumoreq.simulator.gui.Launcher</mainClass>
-              <launcher>simulator-gui</launcher>
-              <jlinkImageName>simulator-gui-image</jlinkImageName>
-              <jlinkZipName>simulator-gui.zip</jlinkZipName>
+              <target>
+                <exec executable="cmd" osfamily="windows">
+                  <arg value="/c"/>
+                  <arg value="if exist target (rd /s /q target\dist)"/>
+                </exec>
+              </target>
             </configuration>
           </execution>
         </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.openjfx</groupId>
+        <artifactId>javafx-maven-plugin</artifactId>
+        <version>0.0.8</version>
+        <configuration>
+          <mainClass>com.github.skumoreq.simulator.gui/com.github.skumoreq.simulator.gui.Launcher</mainClass>
+          <jlinkImageName>image</jlinkImageName>
+          <noManPages>true</noManPages>
+          <stripDebug>true</stripDebug>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.panteleyev</groupId>
+        <artifactId>jpackage-maven-plugin</artifactId>
+        <version>1.7.1</version>
+        <configuration>
+          <name>Symulator</name>
+          <vendor>com.github.skumoreq</vendor>
+          <type>APP_IMAGE</type>
+          <module>com.github.skumoreq.simulator.gui/com.github.skumoreq.simulator.gui.Launcher</module>
+          <javaOptions>
+            <option>--enable-native-access=javafx.graphics</option>
+          </javaOptions>
+          <destination>target/dist</destination>
+          <runtimeImage>target/image</runtimeImage>
+        </configuration>
       </plugin>
     </plugins>
   </build>

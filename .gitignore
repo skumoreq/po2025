@@ -7,5 +7,3 @@
 # Build output
 **/out/
 **/target/
-
-/simulator-gui/package-exe.bat

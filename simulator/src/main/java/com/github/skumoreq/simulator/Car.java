@@ -21,9 +21,9 @@ import java.util.List;
  * <li><b>Simulation Engine:</b> A dedicated background thread handles real-time
  * movement calculations using a wait/notify mechanism to minimize CPU usage
  * when the car is idle.</li>
- * <li><b>Thread Safety:</b> Implements a strict synchronization policy. As a
- * gateway to internal components, it ensures that all state changes are atomic
- * and visible across threads.</li>
+ * <li><b>Thread-Safe Wrapper:</b> Implements a strict synchronization policy.
+ * As a gateway to internal components, it ensures that all state changes are
+ * atomic and visible across threads.</li>
  * <li><b>State Observation:</b> Implements the Observer pattern to notify
  * listeners about property changes (e.g., speed, RPM). Notifications are
  * dispatched asynchronously on the JavaFX Application Thread.</li>
@@ -36,13 +36,16 @@ import java.util.List;
  * @author skumoreq
  */
 
-public class Car extends Thread {
+    public class Car extends Thread {
 
     // region ⮞ Thread Execution
 
     public static final long THREAD_SLEEP = 20L;
 
-    // Start the thread paused.
+    /**
+     * Starts in a paused state. Using {@code volatile} ensures immediate
+     * visibility across threads and prevents JIT caching of the state.
+     */
     private volatile boolean paused = true;
 
     public synchronized void pause() {
@@ -66,10 +69,12 @@ public class Car extends Thread {
                         return;
                     }
                 }
-            }
 
-            updateAngle();
-            driveToDestination();
+                // Re-calculating angle and moving in one atomic step
+                // to ensure movement is always consistent with the target.
+                updateAngle();
+                driveToDestination();
+            }
 
             try {
                 //noinspection BusyWait
@@ -119,7 +124,6 @@ public class Car extends Thread {
 
     // region ⮞ Constants
 
-    private static final String UI_FALLBACK_NAME = "Brak nazwy modelu";
     private static final String UI_FORMAT_WEIGHT = "%.1f kg";
     private static final String UI_FORMAT_PRICE = "%.2f zł";
     private static final String UI_FORMAT_SPEED = "%.0f km/h";
@@ -154,6 +158,9 @@ public class Car extends Thread {
             @NotNull String plateNumber, @NotNull String modelName,
             @NotNull Transmission transmission, @NotNull Engine engine
     ) {
+        // Sets the plate number as the name of the thread.
+        super("CarThread-" + plateNumber);
+
         this.plateNumber = plateNumber;
         this.modelName = modelName;
 
@@ -170,6 +177,10 @@ public class Car extends Thread {
 
     public @NotNull String getPlateNumber() {
         return plateNumber;
+    }
+
+    public @NotNull String getModelName() {
+        return modelName;
     }
 
     public @NotNull CarComponent getClutch() {
@@ -205,7 +216,12 @@ public class Car extends Thread {
     }
 
     public synchronized void setDestination(double x, double y) {
-        destination.set(x, y);
+        // Updates the destination only if it is beyond an 8-unit threshold.
+        // This prevents visual jitter in the CarIcon rotation, as the angleTo
+        // method can produce erratic values when the distance to the target
+        // is negligible.
+        if (position.squaredDistanceTo(x, y) >= 64.0) // 8² = 64
+            destination.set(x, y);
     }
     // endregion
 
@@ -314,8 +330,8 @@ public class Car extends Thread {
         notifyObservers(CarObserver.ChangedProperty.GEAR);
     }
 
-    public synchronized void revUp() {
-        if (!engine.increaseRpm()) return;
+    public synchronized void revUp(double intensity) {
+        if (!engine.increaseRpm(intensity)) return;
 
         if (updateSpeed()) {
             notifyObservers(CarObserver.ChangedProperty.RPM,
@@ -325,9 +341,9 @@ public class Car extends Thread {
         }
     }
 
-    public synchronized void revDown() throws EngineStalledException {
+    public synchronized void revDown(double intensity) throws EngineStalledException {
         try {
-            if (!engine.decreaseRpm()) return;
+            if (!engine.decreaseRpm(intensity)) return;
 
             if (updateSpeed()) {
                 notifyObservers(CarObserver.ChangedProperty.RPM,
@@ -364,10 +380,6 @@ public class Car extends Thread {
     // endregion
 
     // region ⮞ Display Methods
-
-    public @NotNull String getModelNameDisplay() {
-        return modelName.isBlank() ? UI_FALLBACK_NAME : modelName.trim();
-    }
 
     public @NotNull String getTotalWeightDisplay() {
         return String.format(UI_FORMAT_WEIGHT, calculateTotalWeight());

@@ -78,6 +78,16 @@ public class Point {
     }
 
     /**
+     * @return Squared Euclidean distance between this point and the given coordinates.
+     */
+    public double squaredDistanceTo(double x, double y) {
+        double dx = x - this.x;
+        double dy = y - this.y;
+
+        return dx * dx + dy * dy;
+    }
+
+    /**
      * @return Angle in degrees between this point and the given point, or
      * {@code Double.NaN} if the points overlap.
      */

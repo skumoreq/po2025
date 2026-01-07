@@ -14,7 +14,6 @@ public abstract class CarComponent {
 
     // region ⮞ Constants
 
-    private static final String UI_FALLBACK_NAME = "Brak nazwy części";
     private static final String UI_FORMAT_WEIGHT = "%.1f kg";
     private static final String UI_FORMAT_PRICE = "%.2f zł";
     // endregion
@@ -37,6 +36,10 @@ public abstract class CarComponent {
 
     // region ⮞ Getters
 
+    public @NotNull String getName() {
+        return name;
+    }
+
     public double getWeight() {
         return weight;
     }
@@ -47,10 +50,6 @@ public abstract class CarComponent {
     // endregion
 
     // region ⮞ Display Methods
-
-    public @NotNull String getNameDisplay() {
-        return name.isBlank() ? UI_FALLBACK_NAME : name.trim();
-    }
 
     public @NotNull String getWeightDisplay() {
         return String.format(UI_FORMAT_WEIGHT, weight);

@@ -1,17 +1,17 @@
 package com.github.skumoreq.simulator;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 
@@ -49,14 +49,14 @@ public class CarManager {
         }
     }
 
-    private static <T extends CarComponent> List<T> loadComponents(
-            String componentName,
+    @Unmodifiable
+    private static <T extends CarComponent> @NotNull List<T> loadComponents(
+            String componentType,
             Function<JsonNode, T> mapperFunction
     ) {
         try {
             List<T> loadedComponents = new ArrayList<>();
-
-            JsonNode componentsData = COMPONENTS_DATA_ROOT.get(componentName);
+            JsonNode componentsData = COMPONENTS_DATA_ROOT.get(componentType);
 
             if (componentsData == null || !componentsData.isArray())
                 throw new RuntimeException("Required JSON field is missing or is not an array.");
@@ -67,23 +67,30 @@ public class CarManager {
             if (loadedComponents.isEmpty())
                 throw new RuntimeException("The list contains no entries.");
 
-            return Collections.unmodifiableList(loadedComponents);
-        } catch (Exception exception) {
-            throw new RuntimeException("Failed to load " + componentName + " component data.", exception);
+            return List.copyOf(loadedComponents);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to load " + componentType + " component data.", e);
         }
     }
 
     public static final @NotNull List<Clutch> CLUTCHES = loadComponents(
             "clutch", node -> new Clutch(
-                    node.get("name").asText(),
+                    node.get("name").asString(),
                     node.get("weight").asDouble(),
                     node.get("price").asDouble()
             )
     );
 
+    private static @NotNull Clutch findClutchByName(@NotNull String name) {
+        for (Clutch clutch : CLUTCHES) {
+            if (clutch.getName().equals(name)) return clutch;
+        }
+        throw new RuntimeException("Clutch '" + name + "' not found in CLUTCHES registry.");
+    }
+
     public static final @NotNull List<Engine> ENGINES = loadComponents(
             "engine", node -> new Engine(
-                    node.get("name").asText(),
+                    node.get("name").asString(),
                     node.get("weight").asDouble(),
                     node.get("price").asDouble(),
                     node.get("maxRpm").asDouble()
@@ -92,10 +99,10 @@ public class CarManager {
 
     public static final @NotNull List<Transmission> TRANSMISSIONS = loadComponents(
             "transmission", node -> new Transmission(
-                    node.get("name").asText(),
+                    node.get("name").asString(),
                     node.get("weight").asDouble(),
                     node.get("price").asDouble(),
-                    CLUTCHES.get(node.get("clutch").asInt()),
+                    findClutchByName(node.get("clutch").asString()),
                     MAPPER.convertValue(node.get("ratios"), double[].class)
             )
     );
@@ -106,6 +113,10 @@ public class CarManager {
     private final @NotNull ObservableList<Car> cars = FXCollections.observableArrayList();
     private final @NotNull ObservableList<String> usedPlateNumbers = FXCollections.observableArrayList();
 
+    /**
+     * Currently selected car instance. Using {@code volatile} ensures that any
+     * thread always sees the most recent selection.
+     */
     private volatile @Nullable Car selected = null;
     // endregion
 
@@ -153,16 +164,15 @@ public class CarManager {
 
     // region ⮞ Query Methods
 
-    private @Nullable Car findByPlateNumber(@NotNull String plateNumber) {
+    public @Nullable Car findByPlateNumber(@NotNull String plateNumber) {
         for (Car car : cars) {
             if (car.getPlateNumber().equals(plateNumber)) return car;
         }
-
         return null;
     }
 
-    public void selectByPlateNumber(@NotNull String plateNumber) {
-        selected = findByPlateNumber(plateNumber);
+    public void select(@NotNull Car car) {
+        selected = car;
     }
 
     public void addEntry(@NotNull Car car) {
@@ -174,8 +184,8 @@ public class CarManager {
         }
     }
 
-    public void removeSelected() {
-        cars.remove(selected);
+    public void removeEntry(@Nullable Car car) {
+        cars.remove(car);
     }
     // endregion
 }

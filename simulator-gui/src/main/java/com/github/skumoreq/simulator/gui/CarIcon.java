@@ -1,7 +1,5 @@
 package com.github.skumoreq.simulator.gui;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.skumoreq.simulator.Car;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.DoubleBinding;
@@ -14,113 +12,119 @@ import javafx.scene.effect.MotionBlur;
 import javafx.scene.image.*;
 import javafx.scene.paint.Color;
 import org.jetbrains.annotations.NotNull;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
+import java.io.InputStream;
 import java.net.URL;
 import java.util.*;
 
-import static com.github.skumoreq.simulator.gui.JavaFxUtils.EasingMode.*;
-import static com.github.skumoreq.simulator.gui.JavaFxUtils.remapEased;
+import static com.github.skumoreq.simulator.gui.JavaFXUtils.EasedValue;
+import static com.github.skumoreq.simulator.gui.JavaFXUtils.EasingMode.*;
 
 public class CarIcon extends Group {
 
-    // region > Constants
+    // region ⮞ Static Data Initialization
+
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+
+    private static final String IMAGES_FILENAME_FORMAT = "car_%02d.png";
+    private static final List<Image> IMAGES;
+
+    static {
+        List<Image> loadedImages = new ArrayList<>();
+        String resourcePathPattern = "images/" + IMAGES_FILENAME_FORMAT;
+
+        int index = 1;
+        while (true) {
+            String path = String.format(resourcePathPattern, index);
+            URL url = SimulatorApp.class.getResource(path);
+
+            if (url == null) break;
+
+            loadedImages.add(new Image(url.toExternalForm()));
+            index++;
+        }
+
+        if (loadedImages.isEmpty())
+            throw new RuntimeException(String.format(
+                    "Resource files not found at: %s. " +
+                            "Ensure that files exist and are numbered sequentially starting from 01 (%s, %s, ...).",
+                    resourcePathPattern,
+                    String.format(IMAGES_FILENAME_FORMAT, 1),
+                    String.format(IMAGES_FILENAME_FORMAT, 2)
+            ));
+
+        IMAGES = List.copyOf(loadedImages);
+    }
+
+    private static final String COLORS_DATA_FILENAME = "vehicle-colors.json";
+    private static final List<Color> COLORS;
+
+    static {
+        String path = "data/" + COLORS_DATA_FILENAME;
+
+        try (InputStream inputStream = SimulatorApp.class.getResourceAsStream(path)) {
+            if (inputStream == null)
+                throw new RuntimeException("Resource file not found: " + path);
+
+            List<Color> loadedColors = new ArrayList<>();
+            JsonNode colorsData = MAPPER.readTree(inputStream);
+
+            for (JsonNode colorData : colorsData) {
+                loadedColors.add(Color.web(colorData.get("Hex (Web RGB)").asString()));
+            }
+
+            if (loadedColors.isEmpty())
+                throw new RuntimeException("The list contains no entries.");
+
+            COLORS = List.copyOf(loadedColors);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to initialize COLORS data.", e);
+        }
+    }
+    // endregion
+
+    // region ⮞ Constants
 
     private static final double FIT_WIDTH = 120.0;
     private static final double FIT_HEIGHT = FIT_WIDTH / 2.0;
 
-    private static final List<Image> IMAGES = loadImages();
-    private static final List<Color> TINTS = loadColors();
-
-    private static final Map<Long, Image> CACHED_IMAGES = new HashMap<>();
+    private static final @NotNull Map<Long, Image> CACHED_IMAGES = new HashMap<>(128);
     // endregion
 
-    // region > Static Methods
+    // region ⮞ Instance Fields
 
-    private static @NotNull List<Image> loadImages() {
-        try {
-            List<Image> loadedImages = new ArrayList<>();
+    private final @NotNull ImageView body = new ImageView();
+    private final @NotNull ImageView shadow = new ImageView();
+    private final @NotNull ImageView trails = new ImageView();
 
-            int fileNameIndex = 1;
-            while (true) {
-                String fileName = String.format("car_%02d.png", fileNameIndex);
-                URL url = SimulatorApp.class.getResource("images/" + fileName);
+    private final @NotNull List<ImageView> layers = List.of(shadow, trails, body);
 
-                if (url == null) break;
-
-                loadedImages.add(new Image(url.toExternalForm()));
-                fileNameIndex++;
-            }
-
-            if (loadedImages.isEmpty())
-                throw new RuntimeException(
-                        "No car images found in 'images/' folder. " +
-                        "Expected files: car_01.png, car_02.png, etc."
-                );
-
-            return loadedImages;
-        }
-        catch (Exception exception) {
-            throw new RuntimeException(
-                    "Failed to load car images from 'images/' folder. " +
-                    "Make sure the the resources directory contains car_XX.png files.",
-                    exception
-            );
-        }
-    }
-    private static @NotNull List<Color> loadColors() {
-        try {
-            List<Color> loadedColors = new ArrayList<>();
-            JsonNode colorsData = new ObjectMapper()
-                    .readTree(SimulatorApp.class.getResourceAsStream("data/vehicle-colors.json"));
-
-            for (JsonNode colorEntry : colorsData) {
-                String hexCode = colorEntry.get("Hex (Web RGB)").asText();
-                loadedColors.add(Color.web(hexCode));
-            }
-
-            return loadedColors;
-        }
-        catch (Exception exception) {
-            throw new RuntimeException(
-                    "Failed to load colors from 'data/vehicle-colors.json'. " +
-                    "Make sure the file exists in the resources folder and has valid JSON format.",
-                    exception
-            );
-        }
-    }
+    private final @NotNull GaussianBlur shadowBlur = new GaussianBlur();
+    private final @NotNull MotionBlur trailsBlur = new MotionBlur();
     // endregion
 
-    // region > Instance Fields
+    // region ⮞ Properties & Bindings
 
-    private final ImageView body = new ImageView();
-    private final ImageView shadow = new ImageView();
-    private final ImageView trails = new ImageView();
+    private final @NotNull DoubleProperty shadowOffsetFactor = new SimpleDoubleProperty();
+    private final @NotNull DoubleBinding shadowOffsetX = shadowOffsetFactor.multiply(FIT_WIDTH);
+    private final @NotNull DoubleBinding shadowOffsetY = shadowOffsetFactor.multiply(FIT_HEIGHT);
 
-    private final List<ImageView> layers = List.of(shadow, trails, body);
+    private final @NotNull DoubleProperty trailsOffsetFactor = new SimpleDoubleProperty();
+    private final @NotNull DoubleBinding trailsOffset = trailsOffsetFactor.multiply(FIT_WIDTH);
 
-    private final GaussianBlur shadowBlur = new GaussianBlur();
-    private final MotionBlur trailsBlur = new MotionBlur();
+    private final @NotNull DoubleBinding bodyRotateRadians = Bindings.createDoubleBinding(
+            () -> Math.toRadians(body.getRotate()), body.rotateProperty()
+    );
     // endregion
 
-    // region > Properties & Bindings
-
-    private final DoubleProperty shadowOffsetFactor = new SimpleDoubleProperty();
-    private final DoubleProperty trailsOffsetFactor = new SimpleDoubleProperty();
-
-    private final DoubleBinding bodyRotateRadians = Bindings.createDoubleBinding(
-            () -> Math.toRadians(body.getRotate()), body.rotateProperty());
-    private final DoubleBinding shadowOffsetX = shadowOffsetFactor.multiply(FIT_WIDTH);
-    private final DoubleBinding shadowOffsetY = shadowOffsetFactor.multiply(FIT_HEIGHT);
-    private final DoubleBinding trailsOffset = trailsOffsetFactor.multiply(FIT_WIDTH);
-    // endregion
-
-    // region > Initialization
+    // region ⮞ Initialization
 
     public CarIcon() {
+        getChildren().addAll(layers);
         setupBindings();
         setupEffects();
-
-        this.getChildren().addAll(layers);
     }
 
     private void setupBindings() {
@@ -128,9 +132,8 @@ public class CarIcon extends Group {
             layer.setFitWidth(FIT_WIDTH);
             layer.setFitHeight(FIT_HEIGHT);
 
-            if (layer == body) continue;
-
-            layer.rotateProperty().bind(body.rotateProperty());
+            if (layer != body)
+                layer.rotateProperty().bind(body.rotateProperty());
         }
 
         shadow.translateXProperty().bind(body.translateXProperty().add(shadowOffsetX));
@@ -145,6 +148,7 @@ public class CarIcon extends Group {
                 body.translateYProperty(), bodyRotateRadians, trailsOffset
         ));
     }
+
     private void setupEffects() {
         ColorAdjust blackColorAdjust = new ColorAdjust();
         blackColorAdjust.setBrightness(-1.0);
@@ -156,13 +160,15 @@ public class CarIcon extends Group {
     }
     // endregion
 
-    // region > Helper Methods
+    // region ⮞ Helper Methods
 
-    private void applyImageToAllLayers(Image image) {
-        for (ImageView layer : layers) layer.setImage(image);
+    private void applyImageToAllLayers(@NotNull Image image) {
+        for (ImageView layer : layers) {
+            layer.setImage(image);
+        }
     }
 
-    private @NotNull Image generateTintedImage(@NotNull Image baseTemplate, Color tint) {
+    private @NotNull Image generateTintedImage(@NotNull Image baseTemplate, @NotNull Color tint) {
         int width = (int) baseTemplate.getWidth();
         int height = (int) baseTemplate.getHeight();
 
@@ -175,14 +181,18 @@ public class CarIcon extends Group {
             for (int x = 0; x < width; x++) {
                 Color pixel = input.getColor(x, y);
 
-                if (Math.abs(pixel.getHue() - 120.0) <= 30.0)
+                // Filters pixels within the green hue range [90°, 150°] (Center 120° ± 30°).
+                // This acts as a chroma-key mask for tinting designated car body areas.
+                if (Math.abs(pixel.getHue() - 120.0) <= 30.0) {
                     output.setColor(x, y, Color.hsb(
                             tint.getHue(),
                             tint.getSaturation() * pixel.getSaturation(),
                             tint.getBrightness() * pixel.getBrightness(),
                             pixel.getOpacity()
                     ));
-                else output.setColor(x, y, pixel);
+                } else {
+                    output.setColor(x, y, pixel);
+                }
             }
         }
 
@@ -190,15 +200,15 @@ public class CarIcon extends Group {
     }
     // endregion
 
-    // region > Rendering Methods
+    // region ⮞ Rendering Methods
 
     public void updateImage(@NotNull Car car) {
         // Generate a stable seed from the plate number.
         long seed = car.getPlateNumber().hashCode();
 
         // Check if tinted image was already cached.
-        if (CACHED_IMAGES.containsKey(seed)) {
-            Image cachedImage = CACHED_IMAGES.get(seed);
+        Image cachedImage = CACHED_IMAGES.get(seed);
+        if (cachedImage != null) {
             applyImageToAllLayers(cachedImage);
             return;
         }
@@ -206,49 +216,58 @@ public class CarIcon extends Group {
         Random deterministicRandom = new Random(seed);
 
         Image baseTemplate = IMAGES.get(deterministicRandom.nextInt(IMAGES.size()));
-        Color tint = TINTS.get(deterministicRandom.nextInt(TINTS.size()));
+        Color tint = COLORS.get(deterministicRandom.nextInt(COLORS.size()));
 
         Image tintedImage = generateTintedImage(baseTemplate, tint);
 
-        CACHED_IMAGES.put(seed, tintedImage); // cache for later use
+        // Cache the tinted image for later use.
+        CACHED_IMAGES.put(seed, tintedImage);
         applyImageToAllLayers(tintedImage);
     }
+
     public void updateEffects(@NotNull Car car) {
         double speed = car.getSpeed();
         double topSpeed = car.calculateTopSpeed();
 
         // Shadow Logic (Reacts early to movement)
 
-        double shadowScale = remapEased(speed, 0.0, topSpeed, 1.0, 0.85, QUAD_OUT);
+        EasedValue shadowAnim = EasedValue.from(speed, 0.0, topSpeed, EASE_IN);
+
+        double shadowScale = shadowAnim.map(1.0, 0.85);
         shadow.setScaleX(shadowScale);
         shadow.setScaleY(shadowScale);
 
-        shadowOffsetFactor.set(remapEased(speed, 0.0, topSpeed, 0.05, 0.10, QUAD_OUT));
-        shadow.setOpacity(remapEased(speed, 0.0, topSpeed, 0.4, 0.2, QUAD_OUT));
-        shadowBlur.setRadius(remapEased(speed, 0.0, topSpeed, 4.0, 16.0, QUAD_OUT));
+        shadowOffsetFactor.set(shadowAnim.map(0.05, 0.10));
+        shadow.setOpacity(shadowAnim.map(0.4, 0.2));
+        shadowBlur.setRadius(shadowAnim.map(4.0, 16.0));
 
         // Trails Logic (Aggressive at high speed)
 
         double trailsStartSpeed = topSpeed * 0.25;
         double trailsFullOpacitySpeed = topSpeed * 0.75;
 
-        double trailsScale = remapEased(speed, trailsStartSpeed, topSpeed, 1.0, 1.15, QUAD_IN);
-        trails.setScaleX(trailsScale);
-        trailsOffsetFactor.set((trailsScale - 1.0) * 0.5); // keeps the front of the stretched trail aligned with the body
+        EasedValue trailsAnim = EasedValue.from(speed, trailsStartSpeed, topSpeed, EASE_OUT);
+        EasedValue trailsOpacityAnim = EasedValue.from(speed, trailsStartSpeed, trailsFullOpacitySpeed, EASE_IN_OUT);
 
-        trails.setOpacity(remapEased(speed, trailsStartSpeed, trailsFullOpacitySpeed, 0.0, 0.7, SMOOTHSTEP));
-        trailsBlur.setRadius(remapEased(speed, trailsStartSpeed, topSpeed, 0.0, 32.0, QUAD_IN));
+        double trailsScale = trailsAnim.map(1.0, 1.15);
+        trails.setScaleX(trailsScale);
+        // Counter-shifts the trail to maintain front-edge alignment, as JavaFX scales from the center.
+        trailsOffsetFactor.set((trailsScale - 1.0) * 0.5);
+
+        trails.setOpacity(trailsOpacityAnim.map(0.0, 0.7));
+        trailsBlur.setRadius(trailsAnim.map(0.0, 32.0));
     }
 
     public void updateTranslation(@NotNull Car car) {
         body.setTranslateX(car.getPositionX() - FIT_WIDTH / 2.0);
         body.setTranslateY(car.getPositionY() - FIT_HEIGHT / 2.0);
     }
+
     public void updateRotation(@NotNull Car car) {
         body.setRotate(car.getAngle());
     }
 
-    public void updateVisuals(@NotNull Car car) {
+    public void updateAllVisuals(@NotNull Car car) {
         updateImage(car);
         updateEffects(car);
         updateTranslation(car);

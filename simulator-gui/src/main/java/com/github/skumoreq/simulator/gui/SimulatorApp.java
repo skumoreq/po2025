@@ -17,13 +17,13 @@ public class SimulatorApp extends Application {
         Scene primaryScene = new Scene(fxmlLoader.load());
 
         primaryStage.setTitle("Symulator");
+        primaryStage.setScene(primaryScene);
 
         primaryStage.setOnCloseRequest(_ -> {
             Platform.exit(); // shut down internal thread and clean up
-            System.exit(0); // ensures JVM terminates
+            System.exit(0);  // ensures JVM terminates
         });
 
-        primaryStage.setScene(primaryScene);
         primaryStage.show();
     }
 }

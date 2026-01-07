@@ -1,98 +1,130 @@
 {
   "clutch": [
     {
-      "name": "Standardowe Sachs",
-      "weight": 6.8,
+      "name": "LUK Seryjne",
+      "weight": 8.5,
+      "price": 450.0
+    },
+    {
+      "name": "Valeo Heavy Duty",
+      "weight": 9.2,
       "price": 850.0
     },
     {
-      "name": "Komfortowe LUK",
-      "weight": 11.5,
-      "price": 1100.0
+      "name": "Sachs Performance",
+      "weight": 7.1,
+      "price": 1400.0
     },
     {
-      "name": "Wzmocniony Kevlar",
-      "weight": 7.2,
-      "price": 1450.0
+      "name": "Exedy Stage 2 Spiek",
+      "weight": 5.8,
+      "price": 2100.0
     },
     {
-      "name": "Spiek Ceramiczny",
-      "weight": 4.5,
-      "price": 2200.0
+      "name": "ACT 6-Puck Race",
+      "weight": 5.4,
+      "price": 2900.0
     },
     {
-      "name": "Carbon Dwutarczowy",
-      "weight": 5.2,
-      "price": 5400.0
+      "name": "Tilton Twin-Disc",
+      "weight": 4.1,
+      "price": 6500.0
     }
   ],
   "transmission": [
     {
-      "name": "Standardowa 5-bieg",
-      "weight": 38.0,
-      "price": 2900.0,
-      "ratios": [3.55, 1.92, 1.3, 0.98, 0.8],
-      "clutch": 0
+      "name": "Miejskie 5b Eco",
+      "weight": 35.0,
+      "price": 1200.0,
+      "ratios": [3.54, 1.90, 1.30, 0.95, 0.75],
+      "clutch": "LUK Seryjne"
     },
     {
-      "name": "Ekonomiczna 5-bieg",
+      "name": "Trasowa 5b Long",
+      "weight": 36.5,
+      "price": 1500.0,
+      "ratios": [3.30, 1.85, 1.20, 0.90, 0.70],
+      "clutch": "LUK Seryjne"
+    },
+    {
+      "name": "Sedan 5b Komfort",
       "weight": 42.0,
-      "price": 4200.0,
-      "ratios": [3.4, 1.85, 1.25, 0.9, 0.7],
-      "clutch": 1
+      "price": 2200.0,
+      "ratios": [3.45, 1.95, 1.35, 1.05, 0.80],
+      "clutch": "Valeo Heavy Duty"
     },
     {
-      "name": "Miejska Lekka",
+      "name": "Sport 5b Short",
       "weight": 34.0,
-      "price": 3100.0,
-      "ratios": [3.7, 2.05, 1.35, 1.05, 0.82],
-      "clutch": 2
+      "price": 4200.0,
+      "ratios": [3.25, 2.15, 1.65, 1.35, 1.05],
+      "clutch": "Sachs Performance"
     },
     {
-      "name": "Rajdowa Krótka",
-      "weight": 28.5,
-      "price": 7800.0,
-      "ratios": [3.15, 2.2, 1.65, 1.3, 1.08],
-      "clutch": 3
+      "name": "GTI 5b Balanced",
+      "weight": 38.0,
+      "price": 5500.0,
+      "ratios": [3.15, 2.00, 1.45, 1.10, 0.88],
+      "clutch": "Sachs Performance"
     },
     {
-      "name": "Wyczynowa Kłowa",
-      "weight": 36.0,
-      "price": 12500.0,
-      "ratios": [2.9, 1.95, 1.45, 1.15, 0.92],
-      "clutch": 4
+      "name": "Rally N-Group",
+      "weight": 32.0,
+      "price": 8500.0,
+      "ratios": [3.00, 2.20, 1.80, 1.55, 1.20],
+      "clutch": "Exedy Stage 2 Spiek"
+    },
+    {
+      "name": "Drift Spec Dogbox",
+      "weight": 35.0,
+      "price": 10500.0,
+      "ratios": [2.80, 1.90, 1.50, 1.20, 1.00],
+      "clutch": "ACT 6-Puck Race"
+    },
+    {
+      "name": "Drag 5b Straight-Cut",
+      "weight": 45.0,
+      "price": 14000.0,
+      "ratios": [2.60, 1.80, 1.40, 1.15, 0.95],
+      "clutch": "Tilton Twin-Disc"
     }
   ],
   "engine": [
     {
-      "name": "1.2 DualJet Eco",
-      "weight": 75.0,
-      "price": 6400.0,
+      "name": "1.0 R3 EcoCity",
+      "weight": 82.0,
+      "price": 3500.0,
       "maxRpm": 6000.0
     },
     {
-      "name": "1.6 MPI Wolnossący",
-      "weight": 112.0,
+      "name": "1.4 R4 Seryjny",
+      "weight": 98.0,
+      "price": 4200.0,
+      "maxRpm": 6400.0
+    },
+    {
+      "name": "1.6 R4 Sport-Line",
+      "weight": 110.0,
       "price": 5800.0,
-      "maxRpm": 5800.0
+      "maxRpm": 6800.0
     },
     {
-      "name": "1.0 TSI Turbo R3",
-      "weight": 88.0,
-      "price": 7200.0,
-      "maxRpm": 6200.0
-    },
-    {
-      "name": "2.0 VTEC High RPM",
+      "name": "1.8 R4 Turbo",
       "weight": 135.0,
-      "price": 18500.0,
-      "maxRpm": 8200.0
+      "price": 8500.0,
+      "maxRpm": 7200.0
     },
     {
-      "name": "3.0 V6 Bi-Turbo",
-      "weight": 185.0,
-      "price": 35000.0,
-      "maxRpm": 7200.0
+      "name": "2.0 R4 Track Day",
+      "weight": 125.0,
+      "price": 11000.0,
+      "maxRpm": 7600.0
+    },
+    {
+      "name": "2.2 R4 VTEC-Spec",
+      "weight": 130.0,
+      "price": 15500.0,
+      "maxRpm": 8200.0
     }
   ]
 }

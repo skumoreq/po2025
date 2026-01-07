@@ -1,190 +1,275 @@
-/* Application UI Theme - JavaFX CSS */
+/* SimulatorApp UI Theme - JavaFX CSS */
 
-/* region > General Styling */
+/* region ⮞ Root & Color Schemes */
 
-* {
-    /* Color constants */
-    -ui-primary: #f5f5f5; /* whitesmoke */
-    -ui-primary-soft: #e6e6e6;
-    -ui-secondary: #696969; /* dimgray */
-    -ui-secondary-soft: #808080;
+.root.light-mode
+{
+    -ui-primary: #f5f5f5;
+    -ui-secondary: #696969;
+    -ui-dimmed: derive(-ui-primary, 50%);
+    -ui-primary-alt: derive(-ui-primary, -5%);
+    -ui-secondary-alt: derive(-ui-secondary, 15%);
 }
 
-.root {
-    -fx-border-width: 1px;
+.root.dark-mode
+{
+    -ui-primary: #1e1e1e;
+    -ui-secondary: #dcdcdc;
+    -ui-dimmed: derive(-ui-primary, -50%);
+    -ui-primary-alt: derive(-ui-primary, 5%);
+    -ui-secondary-alt: derive(-ui-secondary, -15%);
+}
+
+.root
+{
     -fx-border-color: -ui-secondary;
-
+    -fx-border-width: 1px;
     -fx-background-color: -ui-primary;
-
     -fx-font-family: "Roboto Mono";
 }
+
+.root.dimmed
+{ -fx-background-color: -ui-dimmed; }
+
+.root.dimmed > *
+{ -fx-opacity: 0.5; }
 /* endregion */
 
-/* region > Special Styling */
+/* region ⮞ StyleClasses */
 
-.scale-large {
-    -fx-font-size: 2em;
+.scale-large
+{ -fx-font-size: 2em; }
+
+.info-icon
+{
+    -fx-fill: -ui-secondary;
+    -fx-font-size: 1.5em;
 }
 
-.driving-area-border {
-    -fx-border-width: 1px;
+.driving-area-background
+{
     -fx-border-color: -ui-secondary;
+    -fx-border-width: 1px;
     -fx-border-radius: 16px;
-
-    -fx-background-color: linear-gradient(to bottom right, -ui-primary, -ui-primary-soft, -ui-primary);
+    -fx-background-color: linear-gradient(to bottom right, -ui-primary, -ui-primary-alt, -ui-primary);
     -fx-background-radius: 16px;
 }
 
-.driving-area {
-    -fx-background-image: url("../images/background.png");
-    -fx-background-size: 300px auto;
-    -fx-background-repeat: repeat;
+.driving-area
+{
     -fx-cursor: crosshair;
+    -fx-background-image: url("../images/background.png");
+    -fx-background-repeat: repeat;
+    -fx-background-size: 300px auto;
 }
 /* endregion */
 
-/* region > General Controls Styling */
+/* region ⮞ Global Styles */
 
 .tool-bar,
 .titled-pane .title,
 .combo-box,
 .button,
-.text-field {
-    -fx-border-width: 1px;
+.text-field
+{
     -fx-border-color: -ui-secondary;
+    -fx-border-width: 1px;
     -fx-border-radius: 8px;
-
-    -fx-background-color: linear-gradient(to bottom, -ui-primary, -ui-primary-soft);
+    -fx-background-color: linear-gradient(to bottom, -ui-primary, -ui-primary-alt);
     -fx-background-radius: 8px;
 }
 
+.titled-pane:expanded .title,
+.combo-box:showing
+{
+    -fx-border-radius: 8px 8px 0 0;
+    -fx-background-radius: 8px 8px 0 0;
+}
+
+.titled-pane .content,
+.combo-box-popup .list-view
+{
+    -fx-border-color: -ui-secondary;
+    -fx-border-width: 1px;
+    -fx-border-radius: 0 0 8px 8px;
+    -fx-background-color: -ui-primary;
+    -fx-background-radius: 0 0 8px 8px;
+}
+
+.combo-box:hover,
+.combo-box:focus-visible,
+.button:hover,
+.button:focus-visible
+{
+    -fx-background-color: linear-gradient(to bottom, -ui-secondary-alt, -ui-secondary);
+    -fx-text-fill: -ui-primary; /* does not work for combo-box, requires combo-box list-cell */
+}
+
+.combo-box:hover .list-cell,
+.combo-box:focus-visible .list-cell,
+.combo-box:showing .list-cell
+{ -fx-text-fill: -ui-primary; }
+
+.combo-box:showing,
+.button:pressed,
+.button:armed
+{ -fx-background-color: linear-gradient(to bottom, -ui-secondary, -ui-secondary-alt); }
+
+.titled-pane .title,
+.combo-box .list-cell,
+.button,
+.label
+{
+    -fx-font-weight: bold;
+    -fx-text-fill: -ui-secondary;
+}
+
+.combo-box,
+.combo-box-popup .list-view .list-cell,
+.scroll-bar,
+.button,
+.check-box
+{ -fx-cursor: hand; }
+
 .combo-box:disabled,
 .button:disabled,
-.text-field:disabled {
-    -fx-opacity: 0.5;
-}
-.combo-box:disabled .list-cell {
-    /* Prevent double opacity from parent combo-box */
-    -fx-opacity: 1.0;
-}
+.text-field:disabled
+{ -fx-opacity: 0.5; }
+
+
+.combo-box:disabled .list-cell
+{ -fx-opacity: 1.0; } /* prevent double opacity from parent combo-box. */
 /* endregion */
 
-/* region > TitledPane Styling */
+/* region ⮞ ComboBox (.arrow & .list-view .list-cell) */
 
-.titled-pane .title {
-    -fx-font-weight: bold;
-    -fx-text-fill: -ui-secondary;
-}
-.titled-pane:expanded .title {
-    -fx-border-radius: 8px 8px 0 0;
+.combo-box .arrow
+{ -fx-background-color: -ui-secondary; }
 
-    -fx-background-radius: 8px 8px 0 0;
-}
-
-.titled-pane .content {
-    -fx-border-width: 1px;
-    -fx-border-color: -ui-secondary;
-    -fx-border-radius: 0 0 8px 8px;
-
-    -fx-background-color: -ui-primary;
-    -fx-background-radius: 0 0 8px 8px;
-}
-/* endregion */
-
-/* region > ComboBox Styling */
-
-.combo-box {
-    -fx-cursor: hand;
-}
-.combo-box:hover,
-.combo-box:focused {
-    -fx-background-color: linear-gradient(to bottom, -ui-secondary-soft, -ui-secondary);
-}
-.combo-box:showing {
-    -fx-border-radius: 8px 8px 0 0;
-
-    -fx-background-color: linear-gradient(to bottom, -ui-secondary, -ui-secondary-soft);
-    -fx-background-radius: 8px 8px 0 0;
-}
-
-.combo-box .arrow {
-    -fx-background-color: -ui-secondary;
-}
 .combo-box:hover .arrow,
-.combo-box:focused .arrow,
-.combo-box:showing .arrow {
-    -fx-background-color: -ui-primary;
-}
+.combo-box:focus-visible .arrow,
+.combo-box:showing .arrow
+{ -fx-background-color: -ui-primary; }
 
-.combo-box .list-cell {
-    -fx-font-weight: bold;
-    -fx-text-fill: -ui-secondary;
-}
-.combo-box:hover .list-cell,
-.combo-box:focused .list-cell,
-.combo-box:showing .list-cell {
-    -fx-text-fill: -ui-primary;
-}
-
-.combo-box .list-view {
-    -fx-border-width: 1px;
-    -fx-border-color: -ui-secondary;
-    -fx-border-radius: 0 0 8px 8px;
-
-    -fx-background-color: -ui-primary;
-    -fx-background-radius: 0 0 8px 8px;
-}
-
-.combo-box .list-view .list-cell {
+.combo-box-popup .list-view .list-cell
+{
     -fx-background-color: transparent;
-    -fx-cursor: hand;
-
     -fx-font-weight: normal;
     -fx-text-fill: -ui-secondary;
 }
-.combo-box .list-view .list-cell:hover,
-.combo-box .list-view .list-cell:focused {
-    -fx-font-weight: bold;
-}
+
+.combo-box-popup .list-view .list-cell:hover,
+.combo-box-popup .list-view .list-cell:focused
+{ -fx-font-weight: bold; }
 /* endregion */
 
-/* region > Button Styling */
+/* region ⮞ ToggleSwitch (faked using checkbox with StyleClass) */
 
-.button {
-    -fx-padding: 4px 8px;
+/* Hide check-box box part. */
+.check-box.toggle-switch .box
+{ -fx-background-color: transparent; }
 
-    -fx-cursor: hand;
+/* Using mark as our toggle-switch. */
+.check-box.toggle-switch .mark
+{
+    -fx-border-style: solid;
+    -fx-border-color: -ui-secondary;
+    -fx-border-width: 1px;
 
-    -fx-font-weight: bold;
-    -fx-text-fill: -ui-secondary;
+    -fx-min-width: 40px;
+    -fx-min-height: 20px;
+
+    -fx-shape: "M 10,6 C 10,3.779 8.221,2 6,2 3.779,2 2,3.779 2,6 M 0,6 C 0,2.698 2.698,0 6,0 h 12 c 3.302,0 6,2.698 6,6 m 0,0 c 0,3.302 -2.698,6 -6,6 H 6 C 2.698,12 0,9.302 0,6 m 2,0 c 0,2.221 1.779,4 4,4 2.221,0 4,-1.779 4,-4";
+    -fx-background-color: linear-gradient(to right, -ui-primary, -ui-primary);
+
+    -fx-background-insets: 1px 0 -1px 0; /* reapply default modena.css style */
+    -fx-border-insets: 1px 0 -1px 0;     /* these need to match */
 }
-.button:hover,
-.button:focused {
-    -fx-background-color: linear-gradient(to bottom, -ui-secondary-soft, -ui-secondary);
 
-    -fx-text-fill: -ui-primary;
+.check-box.toggle-switch:hover .mark
+{ -fx-background-color: linear-gradient(to right, -ui-primary-alt, -ui-primary); }
+
+.check-box.toggle-switch:selected .mark
+{
+    -fx-scale-x: -1.0; /* flips the toggle-switch to fake thumb moving */
+    -fx-background-color: linear-gradient(to right, -ui-secondary, -ui-secondary-alt);
 }
+
+.check-box.toggle-switch:selected:hover .mark
+{ -fx-background-color: linear-gradient(to right, -ui-secondary-alt, -ui-secondary); }
+/* endregion */
+
+/* region ⮞ Scrollbar (dotted .track) */
+
+.scroll-bar .increment-button,
+.scroll-bar .decrement-button,
+.scroll-bar .increment-arrow,
+.scroll-bar .decrement-arrow
+{ -fx-padding: 0; }
+
+.scroll-bar
+{
+    -fx-pref-width: 6px;
+    -fx-padding: 3px 0 3px 0;
+    -fx-background-color: transparent;
+}
+
+.scroll-bar .track
+{
+    -fx-border-style: dotted;
+    -fx-border-color: -ui-primary-alt;
+    -fx-border-width: 0 0 0 2px;
+    -fx-border-insets: 6px 0 6px 2px;
+    -fx-background-color: transparent;
+}
+
+.scroll-bar .thumb
+{
+    -fx-border-color: -ui-secondary;
+    -fx-border-width: 1px;
+    -fx-border-radius: 3px;
+    -fx-background-color: linear-gradient(to bottom, -ui-primary, -ui-primary-alt);
+    -fx-background-insets: 0 1px 0 0;
+    -fx-background-radius: 3px;
+}
+
+.scroll-bar .thumb:hover
+{ -fx-background-color: linear-gradient(to bottom, -ui-primary-alt, -ui-primary); }
+/* endregion */
+
+/* region ⮞ Miscellaneous Styles */
+
 .button:pressed,
-.button:armed {
-    -fx-scale-x: 0.95;
-    -fx-scale-y: 0.95;
+.button:armed
+{ -fx-translate-y: 2px; }
 
-    -fx-background-color: linear-gradient(to bottom, -ui-secondary, -ui-secondary-soft);
-}
-/* endregion */
-
-/* region > TextField Styling */
-
-.text-field {
+.text-field
+{
     -fx-font-weight: normal;
     -fx-text-fill: -ui-secondary;
 }
-/* endregion */
 
-/* region > Label Styling */
+.tooltip
+{
+    -fx-show-delay: 500ms;
+    -fx-show-duration: 2500ms;
+    -fx-hide-delay: 0ms;
 
-.label {
-    -fx-font-weight: bold;
-    -fx-text-fill: -ui-secondary;
+    -fx-opacity: 0.9;
+    -fx-effect: null;
+    -fx-background-color: -ui-secondary;
+    -fx-background-radius: 8px;
+    -fx-text-fill: -ui-dimmed;
+    -fx-text-alignment: center;
 }
+
+.dialog-pane .header-panel
+{
+    -fx-border-color: -ui-secondary;
+    -fx-border-width: 0 0 1px 0;
+    -fx-background-color: linear-gradient(to bottom, -ui-primary, -ui-primary-alt);
+}
+
+.dialog-pane .content
+{ -fx-padding: 10px 20px 20px 20px; }
 /* endregion */

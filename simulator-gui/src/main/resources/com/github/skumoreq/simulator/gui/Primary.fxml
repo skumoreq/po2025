@@ -4,6 +4,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
+<?import javafx.scene.text.Text?>
 <BorderPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.github.skumoreq.simulator.gui.PrimaryController"
@@ -14,26 +15,52 @@
   <top>
     <StackPane>
       <padding>
-        <Insets top="20" right="20" left="390"/>
+        <Insets top="10" right="10" left="370"/>
       </padding>
 
-      <ToolBar>
-        <Region HBox.hgrow="ALWAYS"/>
+      <ToolBar minHeight="50" prefHeight="50">
+        <Region prefWidth="15"/>
+
         <HBox spacing="5"
               alignment="CENTER">
-            <Label text="Numer rejestracyjny"/>
-            <ComboBox fx:id="carSelection"
-                      onAction="#carSelectionOnAction"
-                      prefWidth="125"/>
-            <Button onAction="#addCarOnAction"
-                    prefWidth="125"
-                    text="▶ Dodaj auto"/>
-            <Button fx:id="deleteCar"
-                    onAction="#deleteCarOnAction"
-                    prefWidth="125"
-                    text="▶ Usuń auto"/>
+          <Label text="Numer rejestracyjny"/>
+          <ComboBox fx:id="carSelection"
+                    onAction="#carSelectionOnAction"
+                    prefWidth="125"/>
+          <Button onAction="#addCarOnAction"
+                  prefWidth="125"
+                  text="▶ Dodaj auto"/>
+          <Button fx:id="deleteCar"
+                  onAction="#deleteCarOnAction"
+                  prefWidth="125"
+                  text="▶ Usuń auto"/>
         </HBox>
+
         <Region HBox.hgrow="ALWAYS"/>
+
+        <VBox>
+          <HBox spacing="5"
+                alignment="CENTER_RIGHT">
+            <Label text="Tryb Touchpada">
+              <graphic>
+                <Text text="🛈" styleClass="info-icon"/>
+              </graphic>
+              <tooltip>
+                <Tooltip text="Zmień kierunek dodawania gazu, jeśli używasz&#10;Touchpada z włączonym przewijaniem naturalnym."/>
+              </tooltip>
+            </Label>
+            <CheckBox fx:id="reverseScroll"
+                      styleClass="toggle-switch"/>
+          </HBox>
+
+          <HBox spacing="5"
+                alignment="CENTER_RIGHT">
+            <Label text="Ciemny motyw"/>
+            <CheckBox fx:id="darkTheme"
+                      styleClass="toggle-switch"/>
+          </HBox>
+        </VBox>
+
       </ToolBar>
     </StackPane>
   </top>
@@ -42,7 +69,7 @@
     <VBox spacing="5"
           alignment="CENTER">
       <padding>
-        <Insets left="20"/>
+        <Insets left="10"/>
       </padding>
 
       <TitledPane fx:id="carSection"
@@ -80,7 +107,7 @@
 
           <Label GridPane.rowIndex="2" GridPane.columnIndex="0"
                  text="Stan silnika"/>
-          <TextField fx:id="carIsEngineOn"
+          <TextField fx:id="carEngineState"
                      GridPane.rowIndex="2" GridPane.columnIndex="1"
                      disable="true"/>
 
@@ -98,14 +125,14 @@
                     prefWidth="100"
                     text="▶ Odpal">
               <tooltip>
-                <Tooltip text="⌨ Naciśnij klawisz 'R'."/>
+                <Tooltip text="⌨ Naciśnij klawisz R."/>
               </tooltip>
             </Button>
             <Button onAction="#stopEngineOnAction"
                     prefWidth="100"
                     text="▶ Zgaś">
               <tooltip>
-                <Tooltip text="⌨ Naciśnij klawisz 'F'."/>
+                <Tooltip text="⌨ Naciśnij klawisz F."/>
               </tooltip>
             </Button>
             <Region HBox.hgrow="ALWAYS"/>
@@ -135,7 +162,7 @@
           </columnConstraints>
 
           <Label GridPane.rowIndex="0" GridPane.columnIndex="0"
-                 text="Waga części"/>
+                 text="Masa części"/>
           <TextField fx:id="clutchWeight"
                      GridPane.rowIndex="0" GridPane.columnIndex="1"
                      disable="true"/>
@@ -148,7 +175,7 @@
 
           <Label GridPane.rowIndex="2" GridPane.columnIndex="0"
                  text="Stan mechaniczny"/>
-          <TextField fx:id="clutchIsEngaged"
+          <TextField fx:id="clutchState"
                      GridPane.rowIndex="2" GridPane.columnIndex="1"
                      disable="true"/>
 
@@ -160,14 +187,14 @@
                     prefWidth="100"
                     text="▶ Naciśnij">
               <tooltip>
-                <Tooltip text="⌨ Przytrzymaj spację."/>
+                <Tooltip text="⌨ Przytrzymaj Spację&#10;lub 🖱 Lewy Przycisk Myszy."/>
               </tooltip>
             </Button>
             <Button onAction="#releaseClutchOnAction"
                     prefWidth="100"
                     text="▶ Zwolnij">
               <tooltip>
-                <Tooltip text="⌨ Puść spację."/>
+                <Tooltip text="⌨ Puść Spację&#10;lub 🖱 Lewy Przycisk Myszy"/>
               </tooltip>
             </Button>
             <Region HBox.hgrow="ALWAYS"/>
@@ -175,7 +202,7 @@
         </GridPane>
       </TitledPane>
 
-      <TitledPane fx:id="gearboxSection"
+      <TitledPane fx:id="transmissionSection"
                   maxWidth="350"
                   focusTraversable="false">
         <graphic>
@@ -183,7 +210,7 @@
                 alignment="CENTER">
             <Label text="Skrzynia biegów"/>
             <Region HBox.hgrow="ALWAYS"/>
-            <TextField fx:id="gearboxName"
+            <TextField fx:id="transmissionName"
                        prefWidth="200"
                        disable="true"/>
           </HBox>
@@ -197,20 +224,20 @@
           </columnConstraints>
 
           <Label GridPane.rowIndex="0" GridPane.columnIndex="0"
-                 text="Waga części"/>
-          <TextField fx:id="gearboxWeight"
+                 text="Masa części"/>
+          <TextField fx:id="transmissionWeight"
                      GridPane.rowIndex="0" GridPane.columnIndex="1"
                      disable="true"/>
 
           <Label GridPane.rowIndex="1" GridPane.columnIndex="0"
                  text="Cena części"/>
-          <TextField fx:id="gearboxPrice"
+          <TextField fx:id="transmissionPrice"
                      GridPane.rowIndex="1" GridPane.columnIndex="1"
                      disable="true"/>
 
           <Label GridPane.rowIndex="2" GridPane.columnIndex="0"
                  text="Wrzucony bieg"/>
-          <TextField fx:id="gearboxGear"
+          <TextField fx:id="transmissionGear"
                      GridPane.rowIndex="2" GridPane.columnIndex="1"
                      disable="true"/>
 
@@ -222,14 +249,14 @@
                     prefWidth="125"
                     text="▶ Zwiększ bieg">
               <tooltip>
-                <Tooltip text="⌨ Naciśnij klawisz 'E'."/>
+                <Tooltip text="⌨ Naciśnij klawisz E&#10;lub 🖱 Górny Przycisk Boczny (M5)"/>
               </tooltip>
             </Button>
             <Button onAction="#shiftDownOnAction"
                     prefWidth="125"
                     text="▶ Zmniejsz bieg">
               <tooltip>
-                <Tooltip text="⌨ Naciśnij klawisz 'Q'."/>
+                <Tooltip text="⌨ Naciśnij klawisz Q&#10;lub 🖱 Dolny Przycisk Boczny (M4)"/>
               </tooltip>
             </Button>
             <Region HBox.hgrow="ALWAYS"/>
@@ -259,7 +286,7 @@
           </columnConstraints>
 
           <Label GridPane.rowIndex="0" GridPane.columnIndex="0"
-                 text="Waga części"/>
+                 text="Masa części"/>
           <TextField fx:id="engineWeight"
                      GridPane.rowIndex="0" GridPane.columnIndex="1"
                      disable="true"/>
@@ -304,10 +331,10 @@
   <center>
     <StackPane>
       <padding>
-        <Insets topRightBottomLeft="20"/>
+        <Insets topRightBottomLeft="10"/>
       </padding>
 
-      <StackPane styleClass="driving-area-border">
+      <StackPane styleClass="driving-area-background">
         <padding>
           <Insets top="16" right="8" bottom="8" left="8"/>
         </padding>
@@ -315,14 +342,21 @@
         <Pane fx:id="drivingArea"
               onKeyPressed="#drivingAreaOnKeyPressed"
               onKeyReleased="#drivingAreaOnKeyReleased"
+
+              onMousePressed="#drivingAreaOnMousePressed"
+              onMouseReleased="#drivingAreaOnMouseReleased"
+
               onScroll="#drivingAreaOnScroll"
+
               onMouseEntered="#drivingAreaOnMouseEntered"
               onMouseExited="#drivingAreaOnMouseExited"
               onMouseMoved="#drivingAreaOnMouseMoved"
+              onMouseDragged="#drivingAreaOnMouseDragged"
+
               styleClass="driving-area"/>
       </StackPane>
 
-      <Label fx:id="cursorPointDisplay"
+      <Label fx:id="mouseCoords"
              StackPane.alignment="TOP_CENTER"/>
     </StackPane>
 

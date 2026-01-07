@@ -100,26 +100,26 @@ public class Engine extends CarComponent {
     }
 
     /**
-     * Increases the rotational speed by defined step, not surpassing the
+     * Increases the rotational speed by a scaled step, not surpassing the
      * allowable maximum for this engine.
      */
-    public boolean increaseRpm() {
-        if (!isRunning()) return false;
+    public boolean increaseRpm(double intensity) {
+        if (!isRunning() || intensity <= 0) return false;
 
-        rpm += RPM_STEP;
+        rpm += RPM_STEP * intensity;
         rpm = Math.min(rpm, maxRpm);
 
         return true;
     }
 
     /**
-     * Decreases the rotational speed by defined step. Can result in engine
+     * Decreases the rotational speed by a scaled step. Can result in engine
      * stall if RPM falls below the idle threshold.
      */
-    public boolean decreaseRpm() throws EngineStalledException {
-        if (!isRunning()) return false;
+    public boolean decreaseRpm(double intensity) throws EngineStalledException {
+        if (!isRunning() || intensity <= 0) return false;
 
-        rpm -= RPM_STEP;
+        rpm -= RPM_STEP * intensity;
 
         if (rpm < RPM_IDLE) {
             rpm = 0.0;
