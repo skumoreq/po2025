@@ -52,11 +52,11 @@ public abstract class CarComponent {
     // region ⮞ Display Methods
 
     public @NotNull String getWeightDisplay() {
-        return String.format(UI_FORMAT_WEIGHT, weight);
+        return UI_FORMAT_WEIGHT.formatted(weight);
     }
 
     public @NotNull String getPriceDisplay() {
-        return String.format(UI_FORMAT_PRICE, price);
+        return UI_FORMAT_PRICE.formatted(price);
     }
     // endregion
 }

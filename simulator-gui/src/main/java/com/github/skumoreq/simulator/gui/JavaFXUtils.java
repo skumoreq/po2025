@@ -1,12 +1,9 @@
 package com.github.skumoreq.simulator.gui;
 
 import javafx.scene.Node;
-import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.stage.StageStyle;
 import org.jetbrains.annotations.NotNull;
-
-import java.net.URL;
 
 public final class JavaFXUtils {
 
@@ -17,11 +14,11 @@ public final class JavaFXUtils {
     // region ⮞ Static Data Initialization
 
     private static final String STYLESHEET_FILENAME = "styles.css";
-    private static final String STYLESHEET;
+    public static final @NotNull String STYLESHEET;
 
     static {
-        String path = "stylesheets/" + STYLESHEET_FILENAME;
-        URL url = SimulatorApp.class.getResource(path);
+        var path = "stylesheets/" + STYLESHEET_FILENAME;
+        var url = SimulatorApp.class.getResource(path);
 
         if (url == null)
             throw new RuntimeException("Resource file not found: " + path);
@@ -75,31 +72,35 @@ public final class JavaFXUtils {
 
     // region ⮞ Theme Settings
 
-    public static void applyStyleTheme(@NotNull Parent root, boolean useDarkMode) {
-        root.getStyleClass().removeAll("light-mode", "dark-mode");
-        root.getStyleClass().add(useDarkMode ? "dark-mode" : "light-mode");
+    public static void applyStyleTheme(@NotNull Node node, boolean useDarkTheme) {
+        node.getStyleClass().remove("dark-mode");
+
+        if (useDarkTheme) node.getStyleClass().add("dark-mode");
     }
 
-    public static void applyStyleTheme(@NotNull Parent root, @NotNull Parent owner) {
-        applyStyleTheme(root, owner.getStyleClass().contains("dark-mode"));
+    public static void applyStyleTheme(@NotNull Node node, @NotNull Node owner) {
+        applyStyleTheme(node, owner.getStyleClass().contains("dark-mode"));
     }
     // endregion
 
     // region ⮞ Dialogs
 
-    public record AlertInfo(Alert.AlertType type, String header, String content) {}
+    public record AlertInfo(@NotNull Alert.AlertType type, @NotNull String header, @NotNull String content) {
+        public @NotNull AlertInfo withContent(@NotNull String newContent) {
+            return new AlertInfo(type, header, newContent);
+        }
+    }
 
-    public static void showAlertAndWait(@NotNull Parent owner, @NotNull AlertInfo info) {
+    public static void showAlertAndWait(@NotNull Node owner, @NotNull AlertInfo info) {
         owner.getStyleClass().add("dimmed");
 
-        Alert alert = new Alert(info.type());
-        DialogPane dialogPane = alert.getDialogPane();
+        var alert = new Alert(info.type());
+        var dialogPane = alert.getDialogPane();
 
-        if (owner.getScene() != null && owner.getScene().getWindow() != null)
-            alert.initOwner(owner.getScene().getWindow());
-
+        alert.initOwner(owner.getScene().getWindow());
         alert.initStyle(StageStyle.UNDECORATED);
         dialogPane.getStylesheets().add(STYLESHEET);
+
         applyStyleTheme(dialogPane, owner);
 
         alert.setHeaderText(info.header());
@@ -114,7 +115,7 @@ public final class JavaFXUtils {
     // region ⮞ Nodes Visibility
 
     private static void setRenderedState(boolean rendered, Node @NotNull ... nodes) {
-        for (Node node : nodes) {
+        for (var node : nodes) {
             node.setVisible(rendered);
             node.setManaged(rendered);
         }
@@ -132,7 +133,7 @@ public final class JavaFXUtils {
     // region ⮞ TitledPane
 
     private static void forceExpandedState(boolean expanded, TitledPane @NotNull ... titledPanes) {
-        for (TitledPane titledPane : titledPanes) {
+        for (var titledPane : titledPanes) {
             titledPane.setCollapsible(true);
             titledPane.setExpanded(expanded);
             titledPane.setCollapsible(false);
@@ -158,10 +159,6 @@ public final class JavaFXUtils {
         return comboBox.getSelectionModel().getSelectedIndex();
     }
 
-    public static <T> void select(@NotNull ComboBox<T> comboBox, @NotNull T obj) {
-        comboBox.getSelectionModel().select(obj);
-    }
-
     public static <T> void clearSelection(@NotNull ComboBox<T> comboBox) {
         comboBox.getSelectionModel().clearSelection();
     }
@@ -178,7 +175,7 @@ public final class JavaFXUtils {
     }
 
     public static void clear(TextInputControl @NotNull ... textInputControls) {
-        for (TextInputControl textInputControl : textInputControls) {
+        for (var textInputControl : textInputControls) {
             textInputControl.clear();
         }
     }

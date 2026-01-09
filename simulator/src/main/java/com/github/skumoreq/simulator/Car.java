@@ -9,6 +9,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.github.skumoreq.simulator.CarObserver.ChangedProperty.*;
+
 /**
  * Core mechanical logic and simulation engine for a car entity.
  * <p>
@@ -36,7 +38,7 @@ import java.util.List;
  * @author skumoreq
  */
 
-    public class Car extends Thread {
+public class Car extends Thread {
 
     // region ⮞ Thread Execution
 
@@ -70,8 +72,8 @@ import java.util.List;
                     }
                 }
 
-                // Re-calculating angle and moving in one atomic step
-                // to ensure movement is always consistent with the target.
+                // Re-calculating angle and moving in one atomic step to
+                // ensure movement is always consistent with the target.
                 updateAngle();
                 driveToDestination();
             }
@@ -93,8 +95,7 @@ import java.util.List;
 
     public synchronized void addObserver(@NotNull CarObserver observer) {
         // Ensures no duplicate observers are added.
-        if (!observers.contains(observer))
-            observers.add(observer);
+        if (!observers.contains(observer)) observers.add(observer);
     }
 
     public synchronized void removeObserver(@NotNull CarObserver observer) {
@@ -105,19 +106,17 @@ import java.util.List;
         observers.clear();
     }
 
-    public synchronized void notifyObservers(CarObserver.ChangedProperty @NotNull ... properties) {
+    public synchronized void notifyAllObservers(CarObserver.ChangedProperty @NotNull ... properties) {
         if (observers.isEmpty() || properties.length == 0) return;
 
         // Create a snapshot to avoid ConcurrentModificationException and ensure
         // thread safety during asynchronous notification on the JavaFX thread.
-        List<CarObserver> snapshot = List.copyOf(observers);
+        var snapshot = List.copyOf(observers);
 
         Platform.runLater(() -> {
-            for (CarObserver observer : snapshot) {
-                for (CarObserver.ChangedProperty property : properties) {
+            for (var observer : snapshot)
+                for (var property : properties)
                     observer.onCarUpdate(this, property);
-                }
-            }
         });
     }
     // endregion
@@ -133,7 +132,8 @@ import java.util.List;
     private static final double PRICE_MULTIPLIER = 1.23;
 
     private static final double SPEED_MULTIPLIER = 0.03;
-    private static final double UNIT_SCALE = 10.0;
+    private static final double ANGLE_THRESHOLD = 1.0;
+    private static final double METERS_TO_PIXELS = 10.0;
     // endregion
 
     // region ⮞ Instance Fields
@@ -145,8 +145,8 @@ import java.util.List;
     private final @NotNull Transmission transmission;
     private final @NotNull Engine engine;
 
-    private final @NotNull Point position = new Point();
-    private final @NotNull Point destination = new Point();
+    private final @NotNull Point position;
+    private final @NotNull Point destination;
 
     private double speed = 0.0;
     private double angle = 0.0;
@@ -156,7 +156,8 @@ import java.util.List;
 
     public Car(
             @NotNull String plateNumber, @NotNull String modelName,
-            @NotNull Transmission transmission, @NotNull Engine engine
+            @NotNull Transmission transmission, @NotNull Engine engine,
+            @NotNull Point initialPosition
     ) {
         // Sets the plate number as the name of the thread.
         super("CarThread-" + plateNumber);
@@ -167,13 +168,15 @@ import java.util.List;
         this.transmission = new Transmission(transmission);
         this.engine = new Engine(engine);
 
-        // Assign the clutch directly from the transmission to ensure
-        // mechanical consistency.
+        // Assign the clutch directly from the transmission to ensure mechanical consistency.
         clutch = this.transmission.clutch();
+
+        this.position = new Point(initialPosition);
+        this.destination = new Point(position);
     }
     // endregion
 
-    // region ⮞ Getters & Setters
+    // region ⮞ Getters
 
     public @NotNull String getPlateNumber() {
         return plateNumber;
@@ -181,18 +184,6 @@ import java.util.List;
 
     public @NotNull String getModelName() {
         return modelName;
-    }
-
-    public @NotNull CarComponent getClutch() {
-        return clutch;
-    }
-
-    public @NotNull CarComponent getGearbox() {
-        return transmission;
-    }
-
-    public @NotNull CarComponent getEngine() {
-        return engine;
     }
 
     public synchronized double getPositionX() {
@@ -210,18 +201,43 @@ import java.util.List;
     public synchronized double getAngle() {
         return angle;
     }
+    // endregion
 
-    public synchronized void setPosition(double x, double y) {
-        position.set(x, y);
+    // region ⮞ Component Accessors
+
+    /*
+     * Security Policy: Each component is returned as a generic CarComponent.
+     * This restricts access to basic metadata (name, weight, price) and
+     * prevents external callers from invoking internal mechanical logic (e.g.
+     * shifting gears or engaging the clutch) outside the car's synchronized
+     * control flow.
+     *
+     * To modify the vehicle's state, use the dedicated control methods
+     * provided in the Control Methods region.
+     */
+
+    /**
+     * @return the clutch component containing only metadata and display
+     * methods.
+     */
+    public @NotNull CarComponent getClutch() {
+        return clutch;
     }
 
-    public synchronized void setDestination(double x, double y) {
-        // Updates the destination only if it is beyond an 8-unit threshold.
-        // This prevents visual jitter in the CarIcon rotation, as the angleTo
-        // method can produce erratic values when the distance to the target
-        // is negligible.
-        if (position.squaredDistanceTo(x, y) >= 64.0) // 8² = 64
-            destination.set(x, y);
+    /**
+     * @return the transmission component containing only metadata and display
+     * methods.
+     */
+    public @NotNull CarComponent getGearbox() {
+        return transmission;
+    }
+
+    /**
+     * @return the engine component containing only metadata and display
+     * methods.
+     */
+    public @NotNull CarComponent getEngine() {
+        return engine;
     }
     // endregion
 
@@ -229,11 +245,13 @@ import java.util.List;
 
     public double calculateTotalWeight() {
         double baseWeight = clutch.getWeight() + transmission.getWeight() + engine.getWeight();
+
         return baseWeight + WEIGHT_CONSTANT;
     }
 
     public double calculateTotalPrice() {
         double basePrice = clutch.getPrice() + transmission.getPrice() + engine.getPrice();
+
         return (basePrice + PRICE_CONSTANT) * PRICE_MULTIPLIER;
     }
 
@@ -244,13 +262,24 @@ import java.util.List;
 
     // region ⮞ Helper Methods
 
-    private static double calculateSpeed(double rpm, double ratio) {
-        return ratio > 0.0 ? rpm / ratio * SPEED_MULTIPLIER : 0.0;
+    /**
+     * @param rpm       must be non-negative
+     * @param gearRatio must be positive to avoid division by zero
+     *
+     * @return Calculated speed based on given RPM and gear ratio.
+     */
+    private static double calculateSpeed(double rpm, double gearRatio) {
+        if (rpm < 0.0)
+            throw new IllegalArgumentException("RPM cannot be negative: %.2f".formatted(rpm));
+        if (gearRatio <= 0.0)
+            throw new IllegalArgumentException("Gear ratio must be positive: %.2f".formatted(gearRatio));
+
+        return rpm / gearRatio * SPEED_MULTIPLIER;
     }
 
     /**
-     * @implNote This helper does not need {@code synchronized} as long as it
-     * is called exclusively from other synchronized methods of this class.
+     * @implNote This helper does not need {@code synchronized} as long as it is
+     * called exclusively from other synchronized methods of this class.
      */
     private boolean updateSpeed() {
         if (!transmission.isTorqueTransferred()) return false;
@@ -268,8 +297,7 @@ import java.util.List;
 
         transmission.clearPreviousGear();
 
-        notifyObservers(CarObserver.ChangedProperty.ENGINE_STATE,
-                        CarObserver.ChangedProperty.RPM);
+        notifyAllObservers(ENGINE_STATE, RPM);
     }
 
     public synchronized void stopEngine() {
@@ -277,9 +305,7 @@ import java.util.List;
 
         speed = 0.0;
 
-        notifyObservers(CarObserver.ChangedProperty.ENGINE_STATE,
-                        CarObserver.ChangedProperty.RPM,
-                        CarObserver.ChangedProperty.SPEED);
+        notifyAllObservers(ENGINE_STATE, RPM, SPEED);
     }
 
     public synchronized void pressClutch() {
@@ -287,32 +313,26 @@ import java.util.List;
 
         transmission.updatePreviousGear();
 
-        notifyObservers(CarObserver.ChangedProperty.CLUTCH_STATE);
+        notifyAllObservers(CLUTCH_STATE);
     }
 
     public synchronized void releaseClutch() throws EngineStalledException {
         if (!clutch.engage()) return;
 
         try {
-            if (engine.adjustRpmAfterGearChange(transmission.getGearShiftDelta())) {
+            if (engine.adjustRpmAfterGearChange(transmission.getGearShiftDelta(), transmission.getDropFactor())) {
                 if (updateSpeed()) {
-                    notifyObservers(CarObserver.ChangedProperty.CLUTCH_STATE,
-                                    CarObserver.ChangedProperty.RPM,
-                                    CarObserver.ChangedProperty.SPEED);
+                    notifyAllObservers(CLUTCH_STATE, RPM, SPEED);
                 } else {
-                    notifyObservers(CarObserver.ChangedProperty.CLUTCH_STATE,
-                                    CarObserver.ChangedProperty.RPM);
+                    notifyAllObservers(CLUTCH_STATE, RPM);
                 }
             } else {
-                notifyObservers(CarObserver.ChangedProperty.CLUTCH_STATE);
+                notifyAllObservers(CLUTCH_STATE);
             }
         } catch (EngineStalledException e) {
             speed = 0.0;
 
-            notifyObservers(CarObserver.ChangedProperty.CLUTCH_STATE,
-                            CarObserver.ChangedProperty.ENGINE_STATE,
-                            CarObserver.ChangedProperty.RPM,
-                            CarObserver.ChangedProperty.SPEED);
+            notifyAllObservers(CLUTCH_STATE, ENGINE_STATE, RPM, SPEED);
 
             throw e;
         }
@@ -321,23 +341,23 @@ import java.util.List;
     public synchronized void shiftUp() throws ClutchEngagedException {
         if (!transmission.shiftUp()) return;
 
-        notifyObservers(CarObserver.ChangedProperty.GEAR);
+        notifyAllObservers(GEAR);
     }
 
     public synchronized void shiftDown() throws ClutchEngagedException {
         if (!transmission.shiftDown()) return;
 
-        notifyObservers(CarObserver.ChangedProperty.GEAR);
+        notifyAllObservers(GEAR);
     }
 
     public synchronized void revUp(double intensity) {
         if (!engine.increaseRpm(intensity)) return;
 
         if (updateSpeed()) {
-            notifyObservers(CarObserver.ChangedProperty.RPM,
-                            CarObserver.ChangedProperty.SPEED);
+            notifyAllObservers(RPM, SPEED
+            );
         } else {
-            notifyObservers(CarObserver.ChangedProperty.RPM);
+            notifyAllObservers(RPM);
         }
     }
 
@@ -346,55 +366,73 @@ import java.util.List;
             if (!engine.decreaseRpm(intensity)) return;
 
             if (updateSpeed()) {
-                notifyObservers(CarObserver.ChangedProperty.RPM,
-                                CarObserver.ChangedProperty.SPEED);
+                notifyAllObservers(RPM, SPEED);
             } else {
-                notifyObservers(CarObserver.ChangedProperty.RPM);
+                notifyAllObservers(RPM);
             }
         } catch (EngineStalledException e) {
             speed = 0.0;
 
-            notifyObservers(CarObserver.ChangedProperty.ENGINE_STATE,
-                            CarObserver.ChangedProperty.RPM,
-                            CarObserver.ChangedProperty.SPEED);
+            notifyAllObservers(ENGINE_STATE, RPM, SPEED);
 
             throw e;
         }
     }
 
+    /**
+     * Updates the destination if the distance to the new coordinates exceeds
+     * the specified threshold.
+     * <p>
+     * This threshold prevents "visual jitter" (rapid, erratic rotation) of the
+     * car icon, which occurs when calculating an angle towards a point that is
+     * mathematically too close to the current position.
+     *
+     * @implNote Uses squared distance comparison to avoid the performance cost
+     * of {@link Math#sqrt(double)}.
+     */
+    public synchronized void updateDestination(double x, double y, double threshold) {
+        if (!engine.isRunning()) return;
+
+        if (position.squaredDistanceTo(x, y) > threshold * threshold)
+            destination.set(x, y);
+    }
+
     public synchronized void updateAngle() {
-        double angle = position.angleTo(destination);
+        if (!engine.isRunning()) return;
 
-        if (Double.isNaN(angle)) return;
+        double newAngle = position.angleTo(destination);
 
-        this.angle = angle;
+        // Filter out insignificant angle changes.
+        if (!Double.isNaN(newAngle) && Math.abs(angle - newAngle) > ANGLE_THRESHOLD) {
+            angle = newAngle;
 
-        notifyObservers(CarObserver.ChangedProperty.ANGLE);
+            notifyAllObservers(ANGLE);
+        }
     }
 
     public synchronized void driveToDestination() {
-        if (!position.moveTowards(destination, speed, THREAD_SLEEP, UNIT_SCALE)) return;
+        if (!position.moveTowards(destination, speed, THREAD_SLEEP, METERS_TO_PIXELS)) return;
 
-        notifyObservers(CarObserver.ChangedProperty.POSITION);
+        notifyAllObservers(POSITION);
     }
     // endregion
 
     // region ⮞ Display Methods
 
     public @NotNull String getTotalWeightDisplay() {
-        return String.format(UI_FORMAT_WEIGHT, calculateTotalWeight());
+        return UI_FORMAT_WEIGHT.formatted(calculateTotalWeight());
     }
 
     public @NotNull String getTotalPriceDisplay() {
-        return String.format(UI_FORMAT_PRICE, calculateTotalPrice());
+        return UI_FORMAT_PRICE.formatted(calculateTotalPrice());
     }
 
     public @NotNull String getTopSpeedDisplay() {
-        return String.format(UI_FORMAT_SPEED, calculateTopSpeed());
+        return UI_FORMAT_SPEED.formatted(calculateTopSpeed());
     }
 
     public synchronized @NotNull String getSpeedDisplay() {
-        return String.format(UI_FORMAT_SPEED, speed);
+        return UI_FORMAT_SPEED.formatted(speed);
     }
 
     public synchronized @NotNull String getClutchStateDisplay() {

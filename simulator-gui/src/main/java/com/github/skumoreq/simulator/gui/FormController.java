@@ -1,6 +1,7 @@
 package com.github.skumoreq.simulator.gui;
 
-import com.github.skumoreq.simulator.*;
+import com.github.skumoreq.simulator.Car;
+import com.github.skumoreq.simulator.Point;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
@@ -12,17 +13,24 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import static com.github.skumoreq.simulator.CarManager.*;
+
 public class FormController {
 
     // region ⮞ FXML Controller Data Exchange
 
-    private @NotNull List<String> usedPlateNumbers = new ArrayList<>();
-    private @Nullable Car targetCar = null;
-
     private boolean confirmed = false;
+
+    private @NotNull List<String> usedPlateNumbers = new ArrayList<>();
+    private @NotNull Point initialPosition = new Point();
+    private @Nullable Car targetCar = null;
 
     public void importUsedPlateNumbers(@NotNull List<String> usedPlateNumbers) {
         this.usedPlateNumbers = usedPlateNumbers;
+    }
+
+    public void importInitialPosition(@NotNull Point initialPosition) {
+        this.initialPosition = initialPosition;
     }
 
     public @Nullable Car exportResult() {
@@ -30,9 +38,19 @@ public class FormController {
     }
     // endregion
 
+    // region ⮞ Constants
+
+    private static final String INVALID_PLATE_HEADER = "Niepoprawny numer rejestracyjny";
+    private static final Pattern PLATE_NUMBER_PATTERN = Pattern.compile("^[A-Z]{1,3} [0-9ACE-HJ-NP-Y]{5}$");
+
+    JavaFXUtils.AlertInfo INVALID_PLATE_INFO = new JavaFXUtils.AlertInfo(
+            Alert.AlertType.INFORMATION, INVALID_PLATE_HEADER, ""
+    );
+    // endregion
+
     // region ⮞ FXML Injected Fields
 
-    private @FXML VBox root;
+    private @FXML VBox formRoot;
 
     private @FXML TitledPane targetCarSection;
     private @FXML TitledPane clutchSection;
@@ -55,22 +73,17 @@ public class FormController {
     private @FXML TextField clutchPrice;
     private @FXML TextField transmissionWeight;
     private @FXML TextField transmissionPrice;
+    private @FXML TextField transmissionDropFactor;
     private @FXML TextField transmissionRatios;
     private @FXML TextField engineWeight;
     private @FXML TextField enginePrice;
     private @FXML TextField engineMaxRpm;
     // endregion
 
-    // region ⮞ Constants
-
-    private static final String INVALID_PLATE_HEADER = "Niepoprawny numer rejestracyjny";
-    private static final Pattern PLATE_NUMBER_PATTERN = Pattern.compile("^[A-Z]{1,3} [0-9ACE-HJ-NP-Y]{5}$");
-    // endregion
-
     // region ⮞ Helper Methods
 
     private Stage getFormStage() {
-        return (Stage) root.getScene().getWindow();
+        return (Stage) formRoot.getScene().getWindow();
     }
 
     private boolean isFormComplete() {
@@ -114,7 +127,7 @@ public class FormController {
     }
 
     private void populateClutchSection() {
-        Clutch clutch = CarManager.CLUTCHES.get(JavaFXUtils.getSelectedIndex(clutchSelection));
+        var clutch = CLUTCHES.get(JavaFXUtils.getSelectedIndex(clutchSelection));
 
         clutchWeight.setText(clutch.getWeightDisplay());
         clutchPrice.setText(clutch.getPriceDisplay());
@@ -128,25 +141,27 @@ public class FormController {
     }
 
     private void populateTransmissionSection() {
-        Transmission transmission = CarManager.TRANSMISSIONS.get(JavaFXUtils.getSelectedIndex(transmissionSelection));
+        var transmission = TRANSMISSIONS.get(JavaFXUtils.getSelectedIndex(transmissionSelection));
 
         transmissionWeight.setText(transmission.getWeightDisplay());
         transmissionPrice.setText(transmission.getPriceDisplay());
+        transmissionDropFactor.setText(transmission.getDropFactorDisplay());
         transmissionRatios.setText(transmission.getGearRatiosDisplay());
 
         JavaFXUtils.forceExpand(transmissionSection);
 
-        JavaFXUtils.select(clutchSelection, transmission.clutch().getName());
+        clutchSelection.setValue(transmission.clutch().getName());
+        clutchSelection.setValue(transmission.clutch().getName());
     }
 
     private void clearTransmissionSection() {
         JavaFXUtils.clearSelection(clutchSelection);
         JavaFXUtils.forceCollapse(transmissionSection);
-        JavaFXUtils.clear(transmissionWeight, transmissionPrice, transmissionRatios);
+        JavaFXUtils.clear(transmissionWeight, transmissionPrice, transmissionDropFactor, transmissionRatios);
     }
 
     private void populateEngineSection() {
-        Engine engine = CarManager.ENGINES.get(JavaFXUtils.getSelectedIndex(engineSelection));
+        var engine = ENGINES.get(JavaFXUtils.getSelectedIndex(engineSelection));
 
         engineWeight.setText(engine.getWeightDisplay());
         enginePrice.setText(engine.getPriceDisplay());
@@ -195,7 +210,7 @@ public class FormController {
 
         addTargetCar.setDisable(true);
         carPlateNumber.textProperty().addListener((_, _, newVal) -> {
-            String upper = newVal.toUpperCase();
+            var upper = newVal.toUpperCase();
 
             if (!newVal.equals(upper)) {
                 carPlateNumber.setText(upper);
@@ -206,15 +221,14 @@ public class FormController {
         });
         carModelName.textProperty().addListener(_ -> clearTargetCarSection());
 
-        for (Clutch clutch : CarManager.CLUTCHES) {
+        for (var clutch : CLUTCHES)
             clutchSelection.getItems().add(clutch.getName());
-        }
-        for (Transmission transmission : CarManager.TRANSMISSIONS) {
+
+        for (var transmission : TRANSMISSIONS)
             transmissionSelection.getItems().add(transmission.getName());
-        }
-        for (Engine engine : CarManager.ENGINES) {
+
+        for (var engine : ENGINES)
             engineSelection.getItems().add(engine.getName());
-        }
     }
 
     @FXML
@@ -243,25 +257,21 @@ public class FormController {
 
     @FXML
     private void addTargetCarOnAction() {
-        String plateNumber = JavaFXUtils.getTrimmedText(carPlateNumber);
+        var plateNumber = JavaFXUtils.getTrimmedText(carPlateNumber);
 
         targetCar = new Car(
                 plateNumber, JavaFXUtils.getTrimmedText(carModelName),
-                CarManager.TRANSMISSIONS.get(JavaFXUtils.getSelectedIndex(transmissionSelection)),
-                CarManager.ENGINES.get(JavaFXUtils.getSelectedIndex(engineSelection))
+                TRANSMISSIONS.get(JavaFXUtils.getSelectedIndex(transmissionSelection)),
+                ENGINES.get(JavaFXUtils.getSelectedIndex(engineSelection)),
+                initialPosition
         );
 
-        String validationResult = validatePlateNumber(plateNumber);
+        var validationResult = validatePlateNumber(plateNumber);
 
-        if (validationResult.isBlank()) {
+        if (validationResult.isBlank())
             populateTargetCarSection();
-        } else {
-            JavaFXUtils.showAlertAndWait(root, new JavaFXUtils.AlertInfo(
-                    Alert.AlertType.WARNING,
-                    INVALID_PLATE_HEADER,
-                    validationResult)
-            );
-        }
+        else
+            JavaFXUtils.showAlertAndWait(formRoot, INVALID_PLATE_INFO.withContent(validationResult));
     }
 
     @FXML

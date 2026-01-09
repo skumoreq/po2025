@@ -3,12 +3,12 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-
 <?import javafx.scene.text.Text?>
+
 <BorderPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.github.skumoreq.simulator.gui.PrimaryController"
-            fx:id="root"
+            fx:id="primaryRoot"
             prefWidth="1200" prefHeight="800"
             stylesheets="@stylesheets/styles.css">
 
@@ -18,7 +18,9 @@
         <Insets top="10" right="10" left="370"/>
       </padding>
 
-      <ToolBar minHeight="50" prefHeight="50">
+      <HBox prefHeight="40"
+            alignment="CENTER"
+            styleClass="top-bar">
         <Region prefWidth="15"/>
 
         <HBox spacing="5"
@@ -27,6 +29,12 @@
           <ComboBox fx:id="carSelection"
                     onAction="#carSelectionOnAction"
                     prefWidth="125"/>
+        </HBox>
+
+        <Region prefWidth="30"/>
+
+        <HBox spacing="5"
+              alignment="CENTER">
           <Button onAction="#addCarOnAction"
                   prefWidth="125"
                   text="▶ Dodaj auto"/>
@@ -38,30 +46,44 @@
 
         <Region HBox.hgrow="ALWAYS"/>
 
-        <VBox>
-          <HBox spacing="5"
-                alignment="CENTER_RIGHT">
-            <Label text="Tryb Touchpada">
-              <graphic>
-                <Text text="🛈" styleClass="info-icon"/>
-              </graphic>
-              <tooltip>
-                <Tooltip text="Zmień kierunek dodawania gazu, jeśli używasz&#10;Touchpada z włączonym przewijaniem naturalnym."/>
-              </tooltip>
-            </Label>
-            <CheckBox fx:id="reverseScroll"
-                      styleClass="toggle-switch"/>
-          </HBox>
+        <MenuButton fx:id="options"
+                    focusTraversable="false">
+          <graphic>
+            <Region styleClass="gear-icon"/>
+          </graphic>
+          <items>
+            <CustomMenuItem hideOnClick="false">
+              <content>
+                <HBox spacing="5"
+                      alignment="CENTER">
+                  <CheckBox fx:id="reverseScroll"
+                            styleClass="toggle-switch"/>
+                  <Label text="Tryb Touchpada">
+                    <graphic>
+                      <Text text="🛈" styleClass="info-icon"/>
+                    </graphic>
+                    <tooltip>
+                      <Tooltip text="Zmień kierunek dodawania gazu, jeśli używasz&#10;Touchpada z włączonym przewijaniem naturalnym."/>
+                    </tooltip>
+                  </Label>
+                </HBox>
+              </content>
+            </CustomMenuItem>
+            <SeparatorMenuItem/>
+            <CustomMenuItem hideOnClick="false">
+              <content>
+                <HBox spacing="5"
+                      alignment="CENTER">
+                  <CheckBox fx:id="useDarkTheme"
+                            styleClass="toggle-switch"/>
+                  <Label text="Ciemny motyw"/>
+                </HBox>
+              </content>
+            </CustomMenuItem>
+          </items>
+        </MenuButton>
 
-          <HBox spacing="5"
-                alignment="CENTER_RIGHT">
-            <Label text="Ciemny motyw"/>
-            <CheckBox fx:id="darkTheme"
-                      styleClass="toggle-switch"/>
-          </HBox>
-        </VBox>
-
-      </ToolBar>
+      </HBox>
     </StackPane>
   </top>
 

@@ -7,7 +7,7 @@
 <VBox xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.github.skumoreq.simulator.gui.FormController"
-      fx:id="root"
+      fx:id="formRoot"
       prefWidth="400" prefHeight="800"
       spacing="5"
       alignment="CENTER"
@@ -152,6 +152,19 @@
                  disable="true"/>
 
       <Label GridPane.rowIndex="2" GridPane.columnIndex="0"
+             text="Spadek obrotów">
+        <graphic>
+          <Text text="🛈" styleClass="info-icon"/>
+        </graphic>
+        <tooltip>
+          <Tooltip text="Średni procent obrotów zachowywany po zmianie biegu."/>
+        </tooltip>
+      </Label>
+      <TextField fx:id="transmissionDropFactor"
+                 GridPane.rowIndex="2" GridPane.columnIndex="1"
+                 disable="true"/>
+
+      <Label GridPane.rowIndex="3" GridPane.columnIndex="0"
              text="Przełożenia">
         <graphic>
           <Text text="🛈" styleClass="info-icon"/>
@@ -161,7 +174,7 @@
         </tooltip>
       </Label>
       <TextField fx:id="transmissionRatios"
-                 GridPane.rowIndex="2" GridPane.columnIndex="1"
+                 GridPane.rowIndex="3" GridPane.columnIndex="1"
                  disable="true"/>
     </GridPane>
   </TitledPane>

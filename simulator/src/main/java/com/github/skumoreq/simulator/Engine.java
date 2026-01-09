@@ -51,33 +51,45 @@ public class Engine extends CarComponent {
     // region ⮞ Getters
 
     /**
-     * @return {@code true} if the engine is running (rotational speed is at or
-     * above idle).
+     * @return {@code true} if the engine is running (RPM is at or above idle).
      */
     public boolean isRunning() {
         return rpm >= RPM_IDLE;
     }
 
     /**
-     * @return The maximum allowable rotational speed for this engine.
+     * @return The maximum allowable RPM for this engine.
      */
     public double getMaxRpm() {
         return maxRpm;
     }
 
     /**
-     * @return The current rotational speed.
+     * @return The current RPM.
      */
     public double getRpm() {
         return rpm;
     }
     // endregion
 
+    // region ⮞ Helper Methods
+
+    /**
+     * Verifies if the current RPM is sufficient to keep the engine running.
+     * If RPM falls below the idle threshold, the engine is forced to stop.
+     */
+    private void checkEngineStall() throws EngineStalledException {
+        if (rpm < RPM_IDLE) {
+            rpm = 0.0;
+            throw new EngineStalledException();
+        }
+    }
+    // endregion
+
     // region ⮞ Control Methods
 
     /**
-     * Simulates engine ignition by setting the rotational speed to the idle
-     * value.
+     * Simulates engine ignition by setting the RPM to the idle value.
      */
     public boolean start(boolean torqueTransferActive) throws TorqueTransferActiveException {
         if (isRunning()) return false;
@@ -89,7 +101,7 @@ public class Engine extends CarComponent {
     }
 
     /**
-     * Cuts the engine power, setting the rotational speed to {@code 0.0}.
+     * Cuts the engine power, setting the RPM to {@code 0.0}.
      */
     public boolean stop() {
         if (!isRunning()) return false;
@@ -100,57 +112,59 @@ public class Engine extends CarComponent {
     }
 
     /**
-     * Increases the rotational speed by a scaled step, not surpassing the
-     * allowable maximum for this engine.
+     * Increases the RPM by a scaled step, not surpassing the allowable maximum
+     * for this engine.
+     *
+     * @param intensity scaling factor from {@code 0.0} to {@code 1.0}
      */
     public boolean increaseRpm(double intensity) {
-        if (!isRunning() || intensity <= 0) return false;
+        if (intensity < 0.0)
+            throw new IllegalArgumentException("Intensity cannot be negative: %.2f".formatted(intensity));
 
-        rpm += RPM_STEP * intensity;
+        if (!isRunning() || intensity == 0.0) return false;
+
+        rpm += RPM_STEP * Math.min(intensity, 1.0);
         rpm = Math.min(rpm, maxRpm);
 
         return true;
     }
 
     /**
-     * Decreases the rotational speed by a scaled step. Can result in engine
-     * stall if RPM falls below the idle threshold.
+     * Decreases the RPM by a scaled step. Can result in engine stall if RPM
+     * falls below the idle threshold.
+     *
+     * @param intensity scaling factor from {@code 0.0} to {@code 1.0}
      */
     public boolean decreaseRpm(double intensity) throws EngineStalledException {
-        if (!isRunning() || intensity <= 0) return false;
+        if (intensity < 0.0)
+            throw new IllegalArgumentException("Intensity cannot be negative: %.2f".formatted(intensity));
 
-        rpm -= RPM_STEP * intensity;
+        if (!isRunning() || intensity == 0.0) return false;
 
-        if (rpm < RPM_IDLE) {
-            rpm = 0.0;
-            throw new EngineStalledException();
-        }
+        rpm -= RPM_STEP * Math.min(intensity, 1.0);
+        checkEngineStall();
 
         return true;
     }
 
     /**
-     * Synchronizes the rotational speed with a new gear ratio.
+     * Synchronizes the RPM with a new gear ratio.
      * <p>
-     * Simulates mechanical load by dropping rotational speed during upshifts
-     * and creating a surge during downshifts.
+     * Simulates mechanical load by dropping RPM during upshifts and creating a
+     * surge during downshifts.
      * <p>
      * Does not surpass the allowable maximum for this engine. Can result in
      * engine stall if RPM falls below the idle threshold.
      *
-     * @param gearShiftDelta the difference between the previous and current
+     * @param gearShiftDelta the difference between the current and previous
      *                       gear index
      */
-    public boolean adjustRpmAfterGearChange(int gearShiftDelta) throws EngineStalledException {
+    public boolean adjustRpmAfterGearChange(int gearShiftDelta, double dropFactor) throws EngineStalledException {
         if (!isRunning()) return false;
 
-        rpm += gearShiftDelta * RPM_IDLE;
+        rpm *= Math.pow(dropFactor, gearShiftDelta);
         rpm = Math.min(rpm, maxRpm);
-
-        if (rpm < RPM_IDLE) {
-            rpm = 0.0;
-            throw new EngineStalledException();
-        }
+        checkEngineStall();
 
         return true;
     }
@@ -163,11 +177,11 @@ public class Engine extends CarComponent {
     }
 
     public @NotNull String getMaxRpmDisplay() {
-        return String.format(UI_FORMAT_RPM, maxRpm);
+        return UI_FORMAT_RPM.formatted(maxRpm);
     }
 
     public @NotNull String getRpmDisplay() {
-        return String.format(UI_FORMAT_RPM, rpm);
+        return UI_FORMAT_RPM.formatted(rpm);
     }
     // endregion
 }

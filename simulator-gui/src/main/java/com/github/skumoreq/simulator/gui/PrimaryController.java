@@ -3,11 +3,13 @@ package com.github.skumoreq.simulator.gui;
 import com.github.skumoreq.simulator.Car;
 import com.github.skumoreq.simulator.CarManager;
 import com.github.skumoreq.simulator.CarObserver;
+import com.github.skumoreq.simulator.Point;
 import com.github.skumoreq.simulator.exception.CarException;
 import com.github.skumoreq.simulator.exception.ClutchEngagedException;
 import com.github.skumoreq.simulator.exception.EngineStalledException;
 import com.github.skumoreq.simulator.exception.TorqueTransferActiveException;
 import javafx.application.Platform;
+import javafx.collections.ListChangeListener;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -29,7 +31,7 @@ public class PrimaryController implements CarObserver {
     // region ⮞ CarObserver Interface Implementation
 
     private void updateCarSubscription(@NotNull Car newCar) {
-        Car oldCar = carManager.selected();
+        var oldCar = carManager.selected();
 
         if (oldCar != null) oldCar.removeObserver(this);
 
@@ -58,9 +60,33 @@ public class PrimaryController implements CarObserver {
     }
     // endregion
 
+    // region ⮞ Constants
+
+    private static final JavaFXUtils.AlertInfo CLUTCH_ENGAGED_INFO = new JavaFXUtils.AlertInfo(
+            Alert.AlertType.WARNING,
+            "Zgrzyt skrzyni biegów",
+            "Musisz wcisnąć sprzęgło, aby zmienić bieg."
+    );
+    private static final JavaFXUtils.AlertInfo TORQUE_TRANSFER_ACTIVE_INFO = new JavaFXUtils.AlertInfo(
+            Alert.AlertType.WARNING,
+            "Silnik zablokowany",
+            "Nie można uruchomić silnika na biegu. Wrzuć luz."
+    );
+    private static final JavaFXUtils.AlertInfo ENGINE_STALLED_INFO = new JavaFXUtils.AlertInfo(
+            Alert.AlertType.WARNING,
+            "Silnik zgasł",
+            "Zbyt niskie obroty spowodowały zgaśnięcie silnika."
+    );
+    private static final JavaFXUtils.AlertInfo UNKNOWN_CAR_EXCEPTION = new JavaFXUtils.AlertInfo(
+            Alert.AlertType.ERROR,
+            "Nieoczekiwany błąd",
+            "Wystąpił problem z systemami pojazdu. Spróbuj ponownie."
+    );
+    // endregion
+
     // region ⮞ FXML Injected Fields
 
-    private @FXML BorderPane root;
+    private @FXML BorderPane primaryRoot;
     private @FXML Pane drivingArea;
 
     private @FXML TitledPane carSection;
@@ -71,9 +97,10 @@ public class PrimaryController implements CarObserver {
     private @FXML ComboBox<String> carSelection;
 
     private @FXML Button deleteCar;
+    private @FXML MenuButton options;
 
     private @FXML CheckBox reverseScroll;
-    private @FXML CheckBox darkTheme;
+    private @FXML CheckBox useDarkTheme;
 
     private @FXML TextField carModelName;
     private @FXML TextField carTotalWeight;
@@ -120,7 +147,7 @@ public class PrimaryController implements CarObserver {
      * commands.
      */
     private void performCarAction(@NotNull CarAction action) {
-        Car selectedCar = carManager.selected();
+        var selectedCar = carManager.selected();
 
         if (selectedCar == null) return;
 
@@ -132,38 +159,23 @@ public class PrimaryController implements CarObserver {
     }
 
     private void handleCarException(@NotNull CarException e) {
-        JavaFXUtils.AlertInfo info = switch (e) {
-            case ClutchEngagedException _ -> new JavaFXUtils.AlertInfo(
-                    Alert.AlertType.WARNING,
-                    "Zgrzyt skrzyni biegów",
-                    "Musisz wcisnąć sprzęgło, aby zmienić bieg."
-            );
-            case TorqueTransferActiveException _ -> new JavaFXUtils.AlertInfo(
-                    Alert.AlertType.WARNING,
-                    "Silnik zablokowany",
-                    "Nie można uruchomić silnika na biegu. Wrzuć luz."
-            );
-            case EngineStalledException _ -> new JavaFXUtils.AlertInfo(
-                    Alert.AlertType.ERROR,
-                    "Silnik zgasł",
-                    "Zbyt niskie obroty spowodowały zgaśnięcie silnika."
-            );
-            default -> new JavaFXUtils.AlertInfo(
-                    Alert.AlertType.ERROR,
-                    "Nieoczekiwany błąd",
-                    "Wystąpił problem z systemami pojazdu. Spróbuj ponownie."
-            );
+        var alertInfo = switch (e) {
+            case ClutchEngagedException _ -> CLUTCH_ENGAGED_INFO;
+            case TorqueTransferActiveException _ -> TORQUE_TRANSFER_ACTIVE_INFO;
+            case EngineStalledException _ -> ENGINE_STALLED_INFO;
+            default -> UNKNOWN_CAR_EXCEPTION;
         };
 
-        JavaFXUtils.showAlertAndWait(root, info);
+        JavaFXUtils.showAlertAndWait(primaryRoot, alertInfo);
     }
 
     private Stage getPrimaryStage() {
-        return (Stage) root.getScene().getWindow();
+        return (Stage) primaryRoot.getScene().getWindow();
     }
 
     private void initializeDrivingAreaClip() {
-        Rectangle clip = new Rectangle();
+        var clip = new Rectangle();
+
         clip.setArcWidth(20.0);
         clip.setArcHeight(20.0);
 
@@ -176,31 +188,52 @@ public class PrimaryController implements CarObserver {
         });
     }
 
+    private void initializeCarSelection() {
+        var plates = carManager.usedPlateNumbers();
+
+        carSelection.setItems(plates);
+
+        plates.addListener((ListChangeListener<String>) change -> {
+            while (change.next()) {
+                if (change.wasAdded()) {
+                    carSelection.setValue(change.getAddedSubList().getLast());
+                } else if (change.wasRemoved()) {
+                    if (plates.isEmpty()) {
+                        JavaFXUtils.clearSelection(carSelection);
+                    } else {
+                        int removedIndex = change.getFrom();
+                        carSelection.setValue(removedIndex == 0 ? plates.getLast() : plates.get(removedIndex - 1));
+                    }
+                }
+            }
+        });
+    }
+
     private void updateAllFields() {
-        Car selectedCar = carManager.selected();
+        var car = carManager.selected();
 
-        if (selectedCar == null) return;
+        if (car == null) return;
 
-        carModelName.setText(selectedCar.getModelName());
-        carTotalWeight.setText(selectedCar.getTotalWeightDisplay());
-        carTotalPrice.setText(selectedCar.getTotalPriceDisplay());
-        carEngineState.setText(selectedCar.getEngineStateDisplay());
-        carSpeed.setText(selectedCar.getSpeedDisplay());
+        carModelName.setText(car.getModelName());
+        carTotalWeight.setText(car.getTotalWeightDisplay());
+        carTotalPrice.setText(car.getTotalPriceDisplay());
+        carEngineState.setText(car.getEngineStateDisplay());
+        carSpeed.setText(car.getSpeedDisplay());
 
-        clutchName.setText(selectedCar.getClutch().getName());
-        clutchWeight.setText(selectedCar.getClutch().getWeightDisplay());
-        clutchPrice.setText(selectedCar.getClutch().getPriceDisplay());
-        clutchState.setText(selectedCar.getClutchStateDisplay());
+        clutchName.setText(car.getClutch().getName());
+        clutchWeight.setText(car.getClutch().getWeightDisplay());
+        clutchPrice.setText(car.getClutch().getPriceDisplay());
+        clutchState.setText(car.getClutchStateDisplay());
 
-        transmissionName.setText(selectedCar.getGearbox().getName());
-        transmissionWeight.setText(selectedCar.getGearbox().getWeightDisplay());
-        transmissionPrice.setText(selectedCar.getGearbox().getPriceDisplay());
-        transmissionGear.setText(selectedCar.getGearDisplay());
+        transmissionName.setText(car.getGearbox().getName());
+        transmissionWeight.setText(car.getGearbox().getWeightDisplay());
+        transmissionPrice.setText(car.getGearbox().getPriceDisplay());
+        transmissionGear.setText(car.getGearDisplay());
 
-        engineName.setText(selectedCar.getEngine().getName());
-        engineWeight.setText(selectedCar.getEngine().getWeightDisplay());
-        enginePrice.setText(selectedCar.getEngine().getPriceDisplay());
-        engineRpm.setText(selectedCar.getRpmDisplay());
+        engineName.setText(car.getEngine().getName());
+        engineWeight.setText(car.getEngine().getWeightDisplay());
+        enginePrice.setText(car.getEngine().getPriceDisplay());
+        engineRpm.setText(car.getRpmDisplay());
     }
 
     private void populateEverySection() {
@@ -222,9 +255,6 @@ public class PrimaryController implements CarObserver {
 
     @FXML
     private void initialize() {
-        JavaFXUtils.applyStyleTheme(root, false);
-        Platform.runLater(root::requestFocus);
-
         allSections = new TitledPane[]{carSection, clutchSection, transmissionSection, engineSection};
         allFields = new TextField[]{
                 carModelName, carTotalWeight, carTotalPrice, carEngineState, carSpeed,
@@ -232,20 +262,29 @@ public class PrimaryController implements CarObserver {
                 transmissionName, transmissionWeight, transmissionPrice, transmissionGear,
                 engineName, engineWeight, enginePrice, engineRpm};
 
-        darkTheme.selectedProperty().addListener((_, _, selected) -> JavaFXUtils.applyStyleTheme(root, selected));
+        Platform.runLater(primaryRoot::requestFocus);
+
+        JavaFXUtils.applyStyleTheme(primaryRoot, false);
+        JavaFXUtils.forceCollapse(allSections);
 
         initializeDrivingAreaClip();
+        initializeCarSelection();
+
+        carIcon.setVisible(false);
+        deleteCar.setDisable(true);
+
         drivingArea.getChildren().add(carIcon);
         drivingArea.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
             if (event.getCode() == KeyCode.TAB) event.consume();
         });
 
-        carIcon.setVisible(false);
+        useDarkTheme.selectedProperty().addListener((_, _, selected) -> {
+            JavaFXUtils.applyStyleTheme(primaryRoot, selected);
 
-        JavaFXUtils.forceCollapse(allSections);
-        deleteCar.setDisable(true);
-
-        carSelection.setItems(carManager.usedPlateNumbers());
+            // Update options context-menu CSS style.
+            options.hide();
+            options.show();
+        });
     }
 
     @FXML
@@ -256,7 +295,7 @@ public class PrimaryController implements CarObserver {
             return;
         }
 
-        Car car = carManager.findByPlateNumber(carSelection.getValue());
+        var car = carManager.findByPlateNumber(carSelection.getValue());
 
         if (car == null) return;
 
@@ -269,14 +308,14 @@ public class PrimaryController implements CarObserver {
 
     @FXML
     private void addCarOnAction() throws IOException {
-        root.getStyleClass().add("dimmed");
+        primaryRoot.getStyleClass().add("dimmed");
 
-        Stage formStage = new Stage();
-        FXMLLoader fxmlLoader = new FXMLLoader(SimulatorApp.class.getResource("Form.fxml"));
-        Parent formRoot = fxmlLoader.load();
-        Scene formScene = new Scene(formRoot);
+        var formStage = new Stage();
+        var fxmlLoader = new FXMLLoader(SimulatorApp.class.getResource("Form.fxml"));
+        var formRoot = (Parent) fxmlLoader.load();
+        var formScene = new Scene(formRoot);
 
-        JavaFXUtils.applyStyleTheme(formRoot, root);
+        JavaFXUtils.applyStyleTheme(formRoot, primaryRoot);
 
         formStage.initOwner(getPrimaryStage());
         formStage.initModality(Modality.WINDOW_MODAL);
@@ -285,19 +324,17 @@ public class PrimaryController implements CarObserver {
 
         FormController formController = fxmlLoader.getController();
         formController.importUsedPlateNumbers(carManager.getUsedPlateNumbers());
+        formController.importInitialPosition(new Point(
+                drivingArea.getLayoutBounds().getCenterX(),
+                drivingArea.getLayoutBounds().getCenterY()
+        ));
 
         formStage.setOnHidden(_ -> {
-            Car createdCar = formController.exportResult();
+            var createdCar = formController.exportResult();
 
-            if (createdCar != null) {
-                createdCar.setPosition(
-                        drivingArea.getLayoutBounds().getCenterX(),
-                        drivingArea.getLayoutBounds().getCenterY()
-                );
-                carManager.addEntry(createdCar);
-            }
+            if (createdCar != null) carManager.addEntry(createdCar);
 
-            root.getStyleClass().remove("dimmed");
+            primaryRoot.getStyleClass().remove("dimmed");
         });
 
         formStage.show();
@@ -402,7 +439,7 @@ public class PrimaryController implements CarObserver {
 
     @FXML
     private void drivingAreaOnMouseExited() {
-        root.requestFocus();
+        primaryRoot.requestFocus();
         mouseCoords.setText("");
 
         performCarAction(Car::pause);
@@ -413,9 +450,9 @@ public class PrimaryController implements CarObserver {
         double mouseX = event.getX();
         double mouseY = event.getY();
 
-        mouseCoords.setText(String.format("x: %.0f, y: %.0f", mouseX, mouseY));
+        mouseCoords.setText("x: %.0f, y: %.0f".formatted(mouseX, mouseY));
 
-        performCarAction(car -> car.setDestination(mouseX, mouseY));
+        performCarAction(car -> car.updateDestination(mouseX, mouseY, 8.0));
     }
 
     @FXML

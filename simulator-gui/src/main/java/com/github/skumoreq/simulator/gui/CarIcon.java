@@ -9,17 +9,15 @@ import javafx.scene.Group;
 import javafx.scene.effect.ColorAdjust;
 import javafx.scene.effect.GaussianBlur;
 import javafx.scene.effect.MotionBlur;
-import javafx.scene.image.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.image.WritableImage;
 import javafx.scene.paint.Color;
 import org.jetbrains.annotations.NotNull;
-import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
-import java.io.InputStream;
-import java.net.URL;
 import java.util.*;
 
-import static com.github.skumoreq.simulator.gui.JavaFXUtils.EasedValue;
 import static com.github.skumoreq.simulator.gui.JavaFXUtils.EasingMode.*;
 
 public class CarIcon extends Group {
@@ -32,13 +30,13 @@ public class CarIcon extends Group {
     private static final List<Image> IMAGES;
 
     static {
-        List<Image> loadedImages = new ArrayList<>();
-        String resourcePathPattern = "images/" + IMAGES_FILENAME_FORMAT;
+        var pathFormat = "images/" + IMAGES_FILENAME_FORMAT;
+        var loadedImages = new ArrayList<Image>();
 
         int index = 1;
         while (true) {
-            String path = String.format(resourcePathPattern, index);
-            URL url = SimulatorApp.class.getResource(path);
+            var path = pathFormat.formatted(index);
+            var url = SimulatorApp.class.getResource(path);
 
             if (url == null) break;
 
@@ -47,13 +45,11 @@ public class CarIcon extends Group {
         }
 
         if (loadedImages.isEmpty())
-            throw new RuntimeException(String.format(
-                    "Resource files not found at: %s. " +
-                            "Ensure that files exist and are numbered sequentially starting from 01 (%s, %s, ...).",
-                    resourcePathPattern,
-                    String.format(IMAGES_FILENAME_FORMAT, 1),
-                    String.format(IMAGES_FILENAME_FORMAT, 2)
-            ));
+            throw new RuntimeException("""
+                   Resource files not found at: %s.
+                   Ensure that files exist and are numbered sequentially starting from 01 (%s, %s, ...).
+                   """.formatted(pathFormat, IMAGES_FILENAME_FORMAT.formatted(1), IMAGES_FILENAME_FORMAT.formatted(2))
+            );
 
         IMAGES = List.copyOf(loadedImages);
     }
@@ -62,18 +58,17 @@ public class CarIcon extends Group {
     private static final List<Color> COLORS;
 
     static {
-        String path = "data/" + COLORS_DATA_FILENAME;
+        var path = "data/" + COLORS_DATA_FILENAME;
 
-        try (InputStream inputStream = SimulatorApp.class.getResourceAsStream(path)) {
+        try (var inputStream = SimulatorApp.class.getResourceAsStream(path)) {
             if (inputStream == null)
                 throw new RuntimeException("Resource file not found: " + path);
 
-            List<Color> loadedColors = new ArrayList<>();
-            JsonNode colorsData = MAPPER.readTree(inputStream);
+            var loadedColors = new ArrayList<Color>();
+            var colorsData = MAPPER.readTree(inputStream);
 
-            for (JsonNode colorData : colorsData) {
+            for (var colorData : colorsData)
                 loadedColors.add(Color.web(colorData.get("Hex (Web RGB)").asString()));
-            }
 
             if (loadedColors.isEmpty())
                 throw new RuntimeException("The list contains no entries.");
@@ -88,9 +83,9 @@ public class CarIcon extends Group {
     // region ⮞ Constants
 
     private static final double FIT_WIDTH = 120.0;
-    private static final double FIT_HEIGHT = FIT_WIDTH / 2.0;
+    private static final double FIT_HEIGHT = FIT_WIDTH * 0.5;
 
-    private static final @NotNull Map<Long, Image> CACHED_IMAGES = new HashMap<>(128);
+    private static final @NotNull Map<Long, Image> CACHED_IMAGES = new HashMap<>(50);
     // endregion
 
     // region ⮞ Instance Fields
@@ -128,7 +123,7 @@ public class CarIcon extends Group {
     }
 
     private void setupBindings() {
-        for (ImageView layer : layers) {
+        for (var layer : layers) {
             layer.setFitWidth(FIT_WIDTH);
             layer.setFitHeight(FIT_HEIGHT);
 
@@ -150,7 +145,7 @@ public class CarIcon extends Group {
     }
 
     private void setupEffects() {
-        ColorAdjust blackColorAdjust = new ColorAdjust();
+        var blackColorAdjust = new ColorAdjust();
         blackColorAdjust.setBrightness(-1.0);
 
         shadowBlur.setInput(blackColorAdjust);
@@ -163,36 +158,32 @@ public class CarIcon extends Group {
     // region ⮞ Helper Methods
 
     private void applyImageToAllLayers(@NotNull Image image) {
-        for (ImageView layer : layers) {
-            layer.setImage(image);
-        }
+        for (var layer : layers) layer.setImage(image);
     }
 
     private @NotNull Image generateTintedImage(@NotNull Image baseTemplate, @NotNull Color tint) {
         int width = (int) baseTemplate.getWidth();
         int height = (int) baseTemplate.getHeight();
 
-        WritableImage tintedImage = new WritableImage(width, height);
+        var tintedImage = new WritableImage(width, height);
 
-        PixelReader input = baseTemplate.getPixelReader();
-        PixelWriter output = tintedImage.getPixelWriter();
+        var input = baseTemplate.getPixelReader();
+        var output = tintedImage.getPixelWriter();
 
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                Color pixel = input.getColor(x, y);
+                var pixel = input.getColor(x, y);
 
                 // Filters pixels within the green hue range [90°, 150°] (Center 120° ± 30°).
                 // This acts as a chroma-key mask for tinting designated car body areas.
-                if (Math.abs(pixel.getHue() - 120.0) <= 30.0) {
+                if (Math.abs(pixel.getHue() - 120.0) <= 30.0)
                     output.setColor(x, y, Color.hsb(
                             tint.getHue(),
                             tint.getSaturation() * pixel.getSaturation(),
                             tint.getBrightness() * pixel.getBrightness(),
                             pixel.getOpacity()
                     ));
-                } else {
-                    output.setColor(x, y, pixel);
-                }
+                else output.setColor(x, y, pixel);
             }
         }
 
@@ -207,18 +198,19 @@ public class CarIcon extends Group {
         long seed = car.getPlateNumber().hashCode();
 
         // Check if tinted image was already cached.
-        Image cachedImage = CACHED_IMAGES.get(seed);
+        var cachedImage = CACHED_IMAGES.get(seed);
+
         if (cachedImage != null) {
             applyImageToAllLayers(cachedImage);
             return;
         }
 
-        Random deterministicRandom = new Random(seed);
+        var deterministicRandom = new Random(seed);
 
-        Image baseTemplate = IMAGES.get(deterministicRandom.nextInt(IMAGES.size()));
-        Color tint = COLORS.get(deterministicRandom.nextInt(COLORS.size()));
+        var baseTemplate = IMAGES.get(deterministicRandom.nextInt(IMAGES.size()));
+        var tint = COLORS.get(deterministicRandom.nextInt(COLORS.size()));
 
-        Image tintedImage = generateTintedImage(baseTemplate, tint);
+        var tintedImage = generateTintedImage(baseTemplate, tint);
 
         // Cache the tinted image for later use.
         CACHED_IMAGES.put(seed, tintedImage);
@@ -231,7 +223,7 @@ public class CarIcon extends Group {
 
         // Shadow Logic (Reacts early to movement)
 
-        EasedValue shadowAnim = EasedValue.from(speed, 0.0, topSpeed, EASE_IN);
+        var shadowAnim = JavaFXUtils.EasedValue.from(speed, 0.0, topSpeed, EASE_IN);
 
         double shadowScale = shadowAnim.map(1.0, 0.85);
         shadow.setScaleX(shadowScale);
@@ -246,11 +238,12 @@ public class CarIcon extends Group {
         double trailsStartSpeed = topSpeed * 0.25;
         double trailsFullOpacitySpeed = topSpeed * 0.75;
 
-        EasedValue trailsAnim = EasedValue.from(speed, trailsStartSpeed, topSpeed, EASE_OUT);
-        EasedValue trailsOpacityAnim = EasedValue.from(speed, trailsStartSpeed, trailsFullOpacitySpeed, EASE_IN_OUT);
+        var trailsAnim = JavaFXUtils.EasedValue.from(speed, trailsStartSpeed, topSpeed, EASE_OUT);
+        var trailsOpacityAnim = JavaFXUtils.EasedValue.from(speed, trailsStartSpeed, trailsFullOpacitySpeed, EASE_IN_OUT);
 
         double trailsScale = trailsAnim.map(1.0, 1.15);
         trails.setScaleX(trailsScale);
+
         // Counter-shifts the trail to maintain front-edge alignment, as JavaFX scales from the center.
         trailsOffsetFactor.set((trailsScale - 1.0) * 0.5);
 
@@ -259,8 +252,8 @@ public class CarIcon extends Group {
     }
 
     public void updateTranslation(@NotNull Car car) {
-        body.setTranslateX(car.getPositionX() - FIT_WIDTH / 2.0);
-        body.setTranslateY(car.getPositionY() - FIT_HEIGHT / 2.0);
+        body.setTranslateX(car.getPositionX() - FIT_WIDTH * 0.5);
+        body.setTranslateY(car.getPositionY() - FIT_HEIGHT * 0.5);
     }
 
     public void updateRotation(@NotNull Car car) {

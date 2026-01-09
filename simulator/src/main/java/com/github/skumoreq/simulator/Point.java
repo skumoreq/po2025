@@ -54,10 +54,6 @@ public class Point {
         this.x = x;
         this.y = y;
     }
-
-    public void set(@NotNull Point point) {
-        set(point.x, point.y);
-    }
     // endregion
 
     // region ⮞ Vector Operations
@@ -93,6 +89,7 @@ public class Point {
      */
     public double angleTo(@NotNull Point point) {
         if (equals(point)) return Double.NaN;
+
         return Math.toDegrees(Math.atan2(point.y - y, point.x - x));
     }
 
@@ -116,22 +113,30 @@ public class Point {
      * Moves this point towards the target point by a distance determined from
      * the speed (km/h) and elapsed time (ms).
      * <p>
-     * This method computes the travel distance in meters (using {@code speed /
-     * 3600.0 * interval}) before applying the unit scale. Movement is capped to
+     * This method computes the travel distance in meters (using {@code speed *
+     * interval / 3600.0}) before applying the unit scale. Movement is capped to
      * the remaining distance to avoid overshooting the target.
-     * <p>
-     * The method returns early without moving if the speed or interval are
-     * non-positive, or if the point is already at the target.
      *
      * @param target    the point to move towards
-     * @param speed     speed in kilometers per hour
-     * @param interval  elapsed time in milliseconds
-     * @param unitScale the conversion factor from meters to units
+     * @param speed     speed in kilometers per hour (non-negative)
+     * @param interval  elapsed time in milliseconds (non-negative)
+     * @param unitScale the conversion factor from meters to units (positive)
+     *
+     * @return {@code true} if the point moved.
+     * @throws IllegalArgumentException if speed or interval is negative, or if
+     * unitScale is non-positive.
      */
-    public boolean moveTowards(@NotNull Point target, double speed, double interval, double unitScale) {
-        if (equals(target) || speed <= 0.0 || interval <= 0.0) return false;
+    public boolean moveTowards(@NotNull Point target, double speed, long interval, double unitScale) {
+        if (speed < 0.0)
+            throw new IllegalArgumentException("Speed cannot be negative: %.2f km/h".formatted(speed));
+        if (interval < 0L)
+            throw new IllegalArgumentException("Time interval cannot be negative: %d ms".formatted(interval));
+        if (unitScale <= 0.0)
+            throw new IllegalArgumentException("Unit scale must be positive: %.2f".formatted(unitScale));
 
-        Point direction = new Point(target.x - x, target.y - y);
+        if (equals(target) || speed == 0.0 || interval == 0L) return false;
+
+        var direction = new Point(target.x - x, target.y - y);
 
         double distanceToTarget = direction.length();
         double distanceToMove = Math.min(unitScale * speed * interval / 3600.0, distanceToTarget);

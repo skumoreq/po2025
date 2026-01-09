@@ -3,18 +3,17 @@ package com.github.skumoreq.simulator;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Defines a contract for objects that need to be notified about changes
- * in a car instance property.
+ * Defines a contract for objects that need to be notified about changes in a
+ * car instance property.
  * <p>
- * This interface is a part of the <b>Observer pattern</b>
- * implementation.
+ * This interface is a part of the <b>Observer pattern</b> implementation.
  *
  * @see Car
  */
 public interface CarObserver {
 
     enum ChangedProperty {
-        CLUTCH_STATE, ENGINE_STATE, GEAR, RPM, SPEED, POSITION, ANGLE
+        CLUTCH_STATE, GEAR, ENGINE_STATE, RPM, POSITION, SPEED, ANGLE
     }
 
     /**

@@ -10,7 +10,6 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
@@ -23,8 +22,9 @@ import java.util.function.Function;
  * <li><b>Static Data Provider:</b> Loads and exposes pre-defined car component
  * templates (engines, transmissions, clutches) from JSON resources.</li>
  * <li><b>Active Registry:</b> Maintains the collection of active car instances,
- * managing their lifecycle (starting threads) and cleanup (interruption/observer
- * removal) and tracks the currently selected car for synchronized UI updates.</li>
+ * managing their lifecycle (starting threads) and cleanup (interruption/
+ * observer removal) and tracks the currently selected car for synchronized UI
+ * updates.</li>
  * </ul>
  */
 public class CarManager {
@@ -37,9 +37,9 @@ public class CarManager {
     private static final JsonNode COMPONENTS_DATA_ROOT;
 
     static {
-        String path = "data/" + COMPONENTS_DATA_FILENAME;
+        var path = "data/" + COMPONENTS_DATA_FILENAME;
 
-        try (InputStream inputStream = CarManager.class.getResourceAsStream(path)) {
+        try (var inputStream = CarManager.class.getResourceAsStream(path)) {
             if (inputStream == null)
                 throw new RuntimeException("Resource file not found: " + path);
 
@@ -55,13 +55,13 @@ public class CarManager {
             Function<JsonNode, T> mapperFunction
     ) {
         try {
-            List<T> loadedComponents = new ArrayList<>();
-            JsonNode componentsData = COMPONENTS_DATA_ROOT.get(componentType);
+            var loadedComponents = new ArrayList<T>();
+            var componentsData = COMPONENTS_DATA_ROOT.get(componentType);
 
             if (componentsData == null || !componentsData.isArray())
                 throw new RuntimeException("Required JSON field is missing or is not an array.");
 
-            for (JsonNode componentData : componentsData)
+            for (var componentData : componentsData)
                 loadedComponents.add(mapperFunction.apply(componentData));
 
             if (loadedComponents.isEmpty())
@@ -82,9 +82,9 @@ public class CarManager {
     );
 
     private static @NotNull Clutch findClutchByName(@NotNull String name) {
-        for (Clutch clutch : CLUTCHES) {
+        for (var clutch : CLUTCHES)
             if (clutch.getName().equals(name)) return clutch;
-        }
+
         throw new RuntimeException("Clutch '" + name + "' not found in CLUTCHES registry.");
     }
 
@@ -126,12 +126,10 @@ public class CarManager {
         cars.addListener((ListChangeListener<Car>) change -> {
             while (change.next()) {
                 if (change.wasAdded()) {
-                    for (Car addedCar : change.getAddedSubList()) {
+                    for (var addedCar : change.getAddedSubList())
                         usedPlateNumbers.add(addedCar.getPlateNumber());
-                    }
-                }
-                if (change.wasRemoved()) {
-                    for (Car removedCar : change.getRemoved()) {
+                } else if (change.wasRemoved()) {
+                    for (var removedCar : change.getRemoved()) {
                         usedPlateNumbers.remove(removedCar.getPlateNumber());
 
                         // CRITICAL: Stop the simulation thread and clear references
@@ -165,9 +163,8 @@ public class CarManager {
     // region ⮞ Query Methods
 
     public @Nullable Car findByPlateNumber(@NotNull String plateNumber) {
-        for (Car car : cars) {
+        for (var car : cars)
             if (car.getPlateNumber().equals(plateNumber)) return car;
-        }
         return null;
     }
 

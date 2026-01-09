@@ -11,8 +11,8 @@ import java.util.StringJoiner;
  * Manages gear shifting logic and the connection to the wheels. It contains a
  * clutch instance to verify torque flow from the engine.
  * <p>
- * While in neutral, the wheels are disconnected from the transmission;
- * otherwise, torque is transferred through a set of predefined gear ratios.
+ * While in neutral, the wheels are disconnected from the transmission.
+ * Otherwise, torque is transferred through a set of predefined gear ratios.
  *
  * @see Clutch
  * @see Engine
@@ -26,12 +26,14 @@ public class Transmission extends CarComponent {
     private static final String UI_NEUTRAL_GEAR = "N";
     private static final String UI_SHIFT_UP = "↑";
     private static final String UI_SHIFT_DOWN = "↓";
+    private static final String UI_DROP_FACTOR_FORMAT = "%.2f%%";
     // endregion
 
     // region ⮞ Instance Fields
 
     private final @NotNull Clutch clutch;
     private final double @NotNull [] ratios;
+    private final double dropFactor;
 
     private int previousGear;
     private int gear;
@@ -47,6 +49,8 @@ public class Transmission extends CarComponent {
         this.clutch = new Clutch(clutch);
         this.ratios = ratios.clone();
 
+        dropFactor = Math.pow(getGearRatio(getGearCount()) / getGearRatio(1), 1.0 / getGearCount());
+
         previousGear = 0;
         gear = 0;
     }
@@ -57,6 +61,7 @@ public class Transmission extends CarComponent {
     public Transmission(@NotNull Transmission transmission) {
         this(transmission.name, transmission.weight, transmission.price, transmission.clutch, transmission.ratios);
     }
+
     // endregion
 
     // region ⮞ Getters
@@ -85,6 +90,13 @@ public class Transmission extends CarComponent {
     }
 
     /**
+     * @return The average percentage of RPM retained between gear shifts.
+     */
+    public double getDropFactor() {
+        return dropFactor;
+    }
+
+    /**
      * @return The total number of forward gears available in this transmission.
      */
     public int getGearCount() {
@@ -92,19 +104,25 @@ public class Transmission extends CarComponent {
     }
 
     /**
-     * Positive value means downshifting, negative means upshifting.
+     * Positive value means upshifting, negative means downshifting.
      *
      * @return The number of gears changed in the last shift.
      */
     public int getGearShiftDelta() {
-        return previousGear - gear;
+        return gear - previousGear;
     }
 
     /**
      * @return The ratio of the specified gear, regardless of clutch state.
+     * @throws IllegalArgumentException if the gear is out of range.
      */
     public double getGearRatio(int gear) {
-        if (gear <= 0 || gear > getGearCount()) return 0.0;
+        if (gear <= 0 || gear > getGearCount())
+            throw new IllegalArgumentException(
+                    "Invalid gear: %d (available range: 1 to %d)"
+                    .formatted(gear, getGearCount())
+            );
+
         return ratios[gear - 1];
     }
 
@@ -161,19 +179,18 @@ public class Transmission extends CarComponent {
     // region ⮞ Display Methods
 
     public @NotNull String getGearRatiosDisplay() {
-        StringJoiner joiner = new StringJoiner(UI_SEPARATOR_RATIO);
+        var joiner = new StringJoiner(UI_SEPARATOR_RATIO);
 
-        for (double ratio : ratios) {
-            joiner.add(String.format(UI_FORMAT_RATIO, ratio));
-        }
+        for (var ratio : ratios)
+            joiner.add(UI_FORMAT_RATIO.formatted(ratio));
 
         return joiner.toString();
     }
 
     public @NotNull String getGearDisplay() {
-        StringBuilder builder = new StringBuilder();
+        var builder = new StringBuilder();
 
-        builder.append(isInNeutral() ? UI_NEUTRAL_GEAR : String.valueOf(gear));
+        builder.append(isInNeutral() ? UI_NEUTRAL_GEAR : gear);
 
         if (!isInNeutral() && !clutch.isEngaged()) {
             if (gear > 1) builder.append(UI_SHIFT_DOWN);
@@ -181,6 +198,10 @@ public class Transmission extends CarComponent {
         }
 
         return builder.toString();
+    }
+
+    public @NotNull String getDropFactorDisplay() {
+        return UI_DROP_FACTOR_FORMAT.formatted(dropFactor * 100.0);
     }
     // endregion
 }

@@ -13,8 +13,8 @@ public class SimulatorApp extends Application {
 
     @Override
     public void start(@NotNull Stage primaryStage) throws IOException {
-        FXMLLoader fxmlLoader = new FXMLLoader(SimulatorApp.class.getResource("Primary.fxml"));
-        Scene primaryScene = new Scene(fxmlLoader.load());
+        var fxmlLoader = new FXMLLoader(SimulatorApp.class.getResource("Primary.fxml"));
+        var primaryScene = new Scene(fxmlLoader.load());
 
         primaryStage.setTitle("Symulator");
         primaryStage.setScene(primaryScene);

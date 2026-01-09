@@ -2,13 +2,18 @@
 
 /* region ⮞ Root & Color Schemes */
 
-.root.light-mode
+.root
 {
     -ui-primary: #f5f5f5;
     -ui-secondary: #696969;
     -ui-dimmed: derive(-ui-primary, 50%);
     -ui-primary-alt: derive(-ui-primary, -5%);
     -ui-secondary-alt: derive(-ui-secondary, 15%);
+
+    -fx-border-color: -ui-secondary;
+    -fx-border-width: 1px;
+    -fx-background-color: -ui-primary;
+    -fx-font-family: "Roboto Mono";
 }
 
 .root.dark-mode
@@ -18,14 +23,6 @@
     -ui-dimmed: derive(-ui-primary, -50%);
     -ui-primary-alt: derive(-ui-primary, 5%);
     -ui-secondary-alt: derive(-ui-secondary, -15%);
-}
-
-.root
-{
-    -fx-border-color: -ui-secondary;
-    -fx-border-width: 1px;
-    -fx-background-color: -ui-primary;
-    -fx-font-family: "Roboto Mono";
 }
 
 .root.dimmed
@@ -44,6 +41,30 @@
 {
     -fx-fill: -ui-secondary;
     -fx-font-size: 1.5em;
+}
+
+.gear-icon
+{
+    -fx-border-color: -ui-secondary;
+    -fx-border-width: 1px;
+    -fx-pref-width: 20px;
+    -fx-pref-height: 20px;
+
+    -fx-background-color: linear-gradient(to bottom right, -ui-primary, -ui-primary-alt);
+    -fx-shape: "M 502.325,307.303 l -39.006-30.805 c -6.215-4.908-9.665-12.429-9.668-20.348 c 0-0.084,0-0.168,0-0.252 c -0.014-7.936,3.44-15.478,9.667-20.396 l 39.007-30.806 c 8.933-7.055,12.093-19.185,7.737-29.701 l -17.134-41.366 c -4.356-10.516-15.167-16.86-26.472-15.532 l -49.366,5.8 c -7.881,0.926-15.656-1.966-21.258-7.586 c -0.059-0.06-0.118-0.119-0.177-0.178 c -5.597-5.602-8.476-13.36-7.552-21.225 l 5.799-49.363 c 1.328-11.305-5.015-22.116-15.531-26.472 L 337.004,1.939 c -10.516-4.356-22.646-1.196-29.701,7.736 l -30.805,39.005 c -4.908,6.215-12.43,9.665-20.349,9.668 c -0.084,0-0.168,0-0.252,0 c -7.935,0.014-15.477-3.44-20.395-9.667 L 204.697,9.675 c -7.055-8.933-19.185-12.092-29.702-7.736 L 133.63,19.072 c -10.516,4.356-16.86,15.167-15.532,26.473 l 5.799,49.366 c 0.926,7.881-1.964,15.656-7.585,21.257 c -0.059,0.059-0.118,0.118-0.178,0.178 c -5.602,5.598-13.36,8.477-21.226,7.552 l -49.363-5.799 c -11.305-1.328-22.116,5.015-26.472,15.531 L 1.939,174.996 c -4.356,10.516-1.196,22.646,7.736,29.701 l 39.006,30.805 c 6.215,4.908,9.665,12.429,9.668,20.348 c 0,0.084,0,0.167,0,0.251 c 0.014,7.935-3.44,15.477-9.667,20.395 L 9.675,307.303 c -8.933,7.055-12.092,19.185-7.736,29.701 l 17.134,41.365 c 4.356,10.516,15.168,16.86,26.472,15.532 l 49.366-5.799 c 7.882-0.926,15.656,1.965,21.258,7.586 c 0.059,0.059,0.118,0.119,0.178,0.178 c 5.597,5.603,8.476,13.36,7.552,21.226 l -5.799,49.364 c -1.328,11.305,5.015,22.116,15.532,26.472 l 41.366,17.134 c 10.516,4.356,22.646,1.196,29.701-7.736 l 30.804-39.005 c 4.908-6.215,12.43-9.665,20.348-9.669 c 0.084,0,0.168,0,0.251,0 c 7.936-0.014,15.478,3.44,20.396,9.667 l 30.806,39.007 c 7.055,8.933,19.185,12.093,29.701,7.736 l 41.366-17.134 c 10.516-4.356,16.86-15.168,15.532-26.472 l -5.8-49.366 c -0.926-7.881,1.965-15.656,7.586-21.257 c 0.059-0.059,0.119-0.119,0.178-0.178 c 5.602-5.597,13.36-8.476,21.225-7.552 l 49.364,5.799 c 11.305,1.328,22.117-5.015,26.472-15.531 l 17.134-41.365 C 514.418,326.488,511.258,314.358,502.325,307.303 z M 281.292,329.698 c -39.68,16.436-85.172-2.407-101.607-42.087 c -16.436-39.68,2.407-85.171,42.087-101.608 c 39.68-16.436,85.172,2.407,101.608,42.088 C 339.815,267.771,320.972,313.262,281.292,329.698 z";
+}
+
+.gear-icon:hover
+{
+    -fx-rotate: 30;
+    -fx-background-color: linear-gradient(to bottom right, -ui-secondary-alt, -ui-secondary);
+}
+
+.gear-icon:pressed
+{
+    -fx-scale-x: 0.9;
+    -fx-scale-y: 0.9;
+    -fx-background-color: linear-gradient(to bottom right, -ui-secondary, -ui-secondary-alt);
 }
 
 .driving-area-background
@@ -66,7 +87,8 @@
 
 /* region ⮞ Global Styles */
 
-.tool-bar,
+.top-bar,
+.context-menu,
 .titled-pane .title,
 .combo-box,
 .button,
@@ -128,14 +150,14 @@
 .combo-box-popup .list-view .list-cell,
 .scroll-bar,
 .button,
-.check-box
+.check-box,
+.gear-icon
 { -fx-cursor: hand; }
 
 .combo-box:disabled,
 .button:disabled,
 .text-field:disabled
 { -fx-opacity: 0.5; }
-
 
 .combo-box:disabled .list-cell
 { -fx-opacity: 1.0; } /* prevent double opacity from parent combo-box. */
@@ -262,6 +284,14 @@
     -fx-text-fill: -ui-dimmed;
     -fx-text-alignment: center;
 }
+
+.menu-button .arrow-button,
+.menu-button .arrow
+{ -fx-padding: 0; }
+
+.menu-button,
+.context-menu .menu-item
+{ -fx-background-color: transparent; }
 
 .dialog-pane .header-panel
 {
